@@ -16,7 +16,7 @@
 
   // Link for the "View my main portfolio" button in the nav bar.
   // Paste the address here when it is ready, e.g. 'https://example.com/'.
-  var MAIN_PORTFOLIO_URL = 'https://sachin-ballari-portfolio-2026-git-preview-sachin17.vercel.app/tagx-case-study-reference.html';
+  var MAIN_PORTFOLIO_URL = 'https://sachin-ballari-portfolio-2026.vercel.app/';
 
   var FS = window.FrameScroll;
   var root = document.documentElement;
