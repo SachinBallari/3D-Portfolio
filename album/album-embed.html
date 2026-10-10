@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Selected Works — Sachin S. Ballari</title>
+  <meta name="description" content="A scroll-driven 3D art album of drawings by Sachin S. Ballari.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <!-- the scroll distance that drives the whole timeline -->
+  <div class="scroll-track" aria-hidden="true"></div>
+
+  <main class="stage" id="stage" aria-label="Art album. Scroll to open the album and turn the pages.">
+    <div class="atmos" data-depth="-0.8"></div>
+    <div class="world" id="world">
+      <div class="desk"></div>
+      <div class="prop pencil" aria-hidden="true">
+        <svg viewBox="0 0 340 18" width="340" height="18">
+          <defs>
+            <linearGradient id="pbody" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#3b2a20"/><stop offset=".18" stop-color="#7a5a3c"/>
+              <stop offset=".34" stop-color="#5a3f2a"/><stop offset=".5" stop-color="#8a6644"/>
+              <stop offset=".68" stop-color="#4c3424"/><stop offset=".85" stop-color="#6e5034"/><stop offset="1" stop-color="#2a1d15"/>
+            </linearGradient>
+            <linearGradient id="pwood" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e3bf8c"/><stop offset="1" stop-color="#c99a62"/></linearGradient>
+            <linearGradient id="pferr" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#6b5a3a"/><stop offset=".35" stop-color="#e8d6a2"/><stop offset=".6" stop-color="#a88f5c"/><stop offset="1" stop-color="#4d4029"/>
+            </linearGradient>
+          </defs>
+          <rect x="14" y="2" width="22" height="14" rx="3" fill="#b6584c"/>
+          <rect x="14" y="2" width="22" height="5" rx="2" fill="#d27b6c" opacity=".55"/>
+          <rect x="34" y="1.5" width="20" height="15" fill="url(#pferr)"/>
+          <path d="M38 1.5v15M43 1.5v15M48 1.5v15" stroke="#5a4a2d" stroke-width=".7" opacity=".6"/>
+          <rect x="54" y="2" width="226" height="14" fill="url(#pbody)"/>
+          <path d="M280 2 L322 8.2 L322 9.8 L280 16 Z" fill="url(#pwood)"/>
+          <path d="M280 2 C 284 5, 284 13, 280 16" fill="none" stroke="#3b2a20" stroke-width="1" opacity=".55"/>
+          <path d="M312 6.8 L334 9 L312 11.2 Z" fill="#2b2b2e"/>
+          <text x="96" y="11.6" font-family="Georgia,serif" font-size="6.2" letter-spacing="1.4" fill="#d8b874" opacity=".85">GRAPHITE · 2B</text>
+        </svg>
+      </div>
+      <div class="prop-shadow pencil-shadow" aria-hidden="true"></div>
+      <div class="book" id="book"></div>
+    </div>
+    <canvas class="dust" id="dust" data-depth="0.6" aria-hidden="true"></canvas>
+    <div class="lamp" data-depth="-0.4"></div>
+    <svg class="foliage foliage-top" data-depth="1.6" viewBox="0 0 520 420" aria-hidden="true">
+      <defs>
+        <radialGradient id="lf" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#1f3014"/><stop offset=".6" stop-color="#0f190b"/><stop offset="1" stop-color="#070c05"/></radialGradient>
+        <path id="leaf" d="M0 0 C -26 -20, -48 10, -36 38 C -26 62, -6 80, 0 96 C 6 80, 26 62, 36 38 C 48 10, 26 -20, 0 0 Z"/>
+      </defs>
+      <path d="M520 0 C 430 40, 380 90, 350 160 C 320 230, 300 300, 230 360" fill="none" stroke="#0e180a" stroke-width="5"/>
+      <g fill="url(#lf)">
+        <use href="#leaf" transform="translate(470 30) rotate(110) scale(1.15)"/>
+        <use href="#leaf" transform="translate(420 70) rotate(30) scale(1.25)"/>
+        <use href="#leaf" transform="translate(372 130) rotate(120) scale(1.05)"/>
+        <use href="#leaf" transform="translate(352 180) rotate(15) scale(1.3)"/>
+        <use href="#leaf" transform="translate(318 255) rotate(95) scale(1.1)"/>
+        <use href="#leaf" transform="translate(272 320) rotate(-10) scale(1.2)"/>
+      </g>
+      <g fill="none" stroke="#3d5a26" stroke-width="1.2" opacity=".45">
+        <path d="M470 30 l-92 30"/><path d="M420 70 l40 75"/><path d="M352 180 l20 92"/>
+      </g>
+    </svg>
+    <svg class="foliage foliage-low" data-depth="2.4" viewBox="0 0 360 300" aria-hidden="true">
+      <g fill="#0b1308">
+        <use href="#leaf" transform="translate(60 300) rotate(200) scale(1.9)"/>
+        <use href="#leaf" transform="translate(150 290) rotate(160) scale(1.5)"/>
+        <use href="#leaf" transform="translate(10 200) rotate(240) scale(1.4)"/>
+      </g>
+    </svg>
+    <div class="vignette"></div>
+  </main>
+
+  <nav class="index" aria-label="Album sections">
+    <div class="index-readout" aria-live="polite">
+      <span class="ro-num">Album</span>
+      <span class="ro-name">Cover</span>
+    </div>
+    <div class="index-rail">
+      <i class="rail-fill"></i>
+      <a href="#" data-p="0"     data-num="·"   data-name="Cover"><b></b><span>Cover</span></a>
+      <a href="#" data-p="0.2"   data-num="I"   data-name="Faces"><b></b><span>I · Faces</span></a>
+      <a href="#" data-p="0.39"  data-num="II"  data-name="Studies"><b></b><span>II · Studies</span></a>
+      <a href="#" data-p="0.58"  data-num="III" data-name="Icons"><b></b><span>III · Icons</span></a>
+      <a href="#" data-p="0.763" data-num="IV"  data-name="Character"><b></b><span>IV · Character</span></a>
+      <a href="#" data-p="0.895" data-num="V"   data-name="Fin"><b></b><span>V · Fin</span></a>
+      <a href="#" data-p="1"     data-num="·"   data-name="Closed"><b></b><span>Closed</span></a>
+    </div>
+    <div class="index-count"><span class="ic-now">00</span><span class="ic-of">/ 05</span></div>
+  </nav>
+
+  <div class="hint">Scroll to open<i></i></div>
+  <div class="end-hint">Scroll up to open it again</div>
+  <div class="loader"><span>Opening the album</span><i></i></div>
+
+  <script src="./config.js"></script>
+  <script src="./script.js"></script>
+
+  <!-- frame-scroll bridge: added so this album can play at the end of the
+       scroll animation (frame-scroll/js/album-section.js). When embedded:
+       the page around it drives the album's progress with its own scroll,
+       wheel input and the index links go to that page, and the cover's four
+       corners are reported so the filmed book can be lined up with it.
+       Nothing else changes; opened on its own the album works as before. -->
+  <script>
+  (function () {
+    if (window.parent === window || !window.__album) return;
+    var root = document.documentElement;
+    root.classList.add('fs-embedded');
+    root.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    function post(m) { try { window.parent.postMessage(m, '*'); } catch (e) {} }
+
+    // invisible markers on the cover's outer corners
+    var face = document.querySelector('#book .mover.cover .face.front');
+    var marks = [];
+    if (face) {
+      [[0, 0], [1, 0], [1, 1], [0, 1]].forEach(function (c) {
+        var i = document.createElement('i');
+        i.setAttribute('aria-hidden', 'true');
+        i.style.cssText = 'position:absolute;width:0;height:0;pointer-events:none;left:' + (c[0] * 100) + '%;top:' + (c[1] * 100) + '%;';
+        face.appendChild(i); marks.push(i);
+      });
+    }
+    function coverQuad() {
+      return marks.map(function (m) { var r = m.getBoundingClientRect(); return [r.left, r.top]; });
+    }
+
+    window.addEventListener('message', function (ev) {
+      var d = ev.data;
+      if (!d || ev.source !== window.parent || d.album == null) return;
+      if (d.album === 'progress') window.__album.set(d.p);
+      else if (d.album === 'measure') post({ album: 'cover', quad: coverQuad(), w: innerWidth, h: innerHeight });
+    });
+
+    // scrolling over the album scrolls the page around it
+    window.addEventListener('wheel', function (e) {
+      e.preventDefault();
+      var dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaMode === 2 ? e.deltaY * innerHeight : e.deltaY;
+      post({ album: 'wheel', dy: dy });
+    }, { passive: false, capture: true });
+    window.addEventListener('keydown', function (e) {
+      var k = { ArrowDown: 60, ArrowUp: -60, PageDown: innerHeight * 0.9, PageUp: -innerHeight * 0.9, ' ': innerHeight * 0.9 }[e.key];
+      if (k == null) return;
+      e.preventDefault(); post({ album: 'wheel', dy: e.shiftKey && e.key === ' ' ? -k : k });
+    }, true);
+    // index links jump within the page around it
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('.index-rail a');
+      if (!a) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      post({ album: 'goto', p: +a.dataset.p });
+    }, true);
+    post({ album: 'ready' });
+  })();
+  </script>
+</body>
+</html>

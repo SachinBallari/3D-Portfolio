@@ -1,0 +1,154 @@
+/* ------------------------------------------------------------------
+   Scroll-controlled frame sequences — structural styles only.
+   No fonts, colours or decorative styling are set here.
+   ------------------------------------------------------------------ */
+
+html, body { margin: 0; padding: 0; }
+
+/* While the laptop interface owns scrolling (html.frame-scroll-locked),
+   js/laptop-screen.js holds the page still; the scrollbar stays put so
+   the page width never changes. */
+
+/* Scroll length of each sequence = how much scrolling plays it.
+   Longer = slower playback. Values are proportional to frame count
+   (300 / 300 / 136 frames) so all three play at the same speed and the
+   handoffs feel continuous. Sequence 2 also contains the move into and
+   out of the laptop screen (about 210vh, see js/laptop-screen.js), and
+   sequence 3 the move into and out of the camera screen (about 210vh,
+   see js/camera-screen.js).
+   Change freely. */
+.frame-seq[data-seq="1"] { --scroll-length: 500vh; }
+.frame-seq[data-seq="2"] { --scroll-length: 710vh; }
+.frame-seq[data-seq="3"] { --scroll-length: 437vh; }
+
+.frame-scroll {
+  position: relative;
+}
+
+/* ONE pinned frame layer for all three sequences. The negative bottom
+   margin lets the sections start at the top of the stage instead of
+   below it, so the stage stays pinned from the first frame of
+   sequence 1 to the last frame of sequence 3. */
+.frame-scroll__stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  margin-bottom: -100vh;
+  margin-bottom: -100svh;
+  overflow: hidden;
+}
+
+/* The frame layer. JS draws with "cover" fit: aspect ratio preserved,
+   never stretched, edges cropped as needed to fill the area. */
+.frame-scroll__canvas {
+  position: absolute;
+  transform-origin: 0 0;  /* the move into the laptop screen warps the scene from here */
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.frame-seq {
+  position: relative;
+  height: var(--scroll-length, 400vh);
+}
+
+/* Empty layer above the frames for your future content. It stays
+   pinned on screen while its own section is playing. */
+.frame-seq__overlay {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  z-index: 1;
+}
+
+/* ------------------------------------------------------------------
+   Laptop screen: the real interface, mapped onto the laptop's display
+   by js/laptop-screen.js. Size and transform are set by script.
+   ------------------------------------------------------------------ */
+.laptop-screen,
+.camera-screen {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  visibility: hidden;
+}
+.laptop-screen__frame,
+.laptop-screen__glare,
+.camera-screen__frame,
+.camera-screen__glare {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border: 0;
+  margin: 0;
+  display: block;
+  transform-origin: 0 0;
+  backface-visibility: hidden;
+}
+.laptop-screen__frame,
+.camera-screen__frame {
+  pointer-events: none;
+  /* the two edge fades (set by script) combine, so all four edges are soft */
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+.laptop-screen.is-interactive .laptop-screen__frame,
+.camera-screen.is-interactive .camera-screen__frame { pointer-events: auto; }
+/* the display glass: faint reflection + the distance blur (backdrop blur,
+   so the screen's edges stay solid) while it is on the laptop */
+.laptop-screen__glare,
+.camera-screen__glare {
+  pointer-events: none;
+  background-image: linear-gradient(112deg, rgba(255,255,255,.08) 0%, rgba(255,255,255,0) 32%, rgba(255,255,255,0) 68%, rgba(255,255,255,.04) 100%);
+}
+/* while the interface is full screen it sits above the section overlays */
+.frame-scroll.is-laptop-active .frame-scroll__stage,
+.frame-scroll.is-camera-active .frame-scroll__stage { z-index: 2; }
+/* the camera HTML's own black screen while it is on the camera */
+.camera-screen__frame { background: #000; }
+
+/* ------------------------------------------------------------------
+   Album section: the art album at the end of the animation
+   (js/album-section.js). It starts exactly where the frame animation
+   stops, pinned over it, and holds the last frame until the album
+   takes over.
+   ------------------------------------------------------------------ */
+.album-scroll {
+  position: relative;
+  margin-top: -100vh;
+  margin-top: -100svh;
+  height: calc(var(--album-scroll, 1120vh) + 100vh);
+  height: calc(var(--album-scroll, 1120vh) + 100svh);
+}
+.album-stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+  z-index: 3;
+  visibility: hidden;
+  background: #120b07;
+}
+.album-stage__still {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  display: block;
+}
+.album-stage__frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  opacity: 0;
+  pointer-events: none;
+}

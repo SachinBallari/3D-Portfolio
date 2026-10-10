@@ -1,0 +1,782 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sachin — Projects</title>
+<meta name="description" content="Explore Sachin's UI/UX case studies and coding projects through a macOS-style Finder window.">
+<style>
+/* ============================================================
+   TOKENS
+   ============================================================ */
+:root{
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Inter","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --win-radius:12px;
+  --sidebar:rgba(234,232,240,.78);
+  --sidebar-ink:#3b3b40;
+  --sidebar-muted:#9a99a2;
+  --pane:#ffffff;
+  --ink:#1d1d1f;
+  --muted:#86868b;
+  --hair:#e6e6e9;
+  --hover:rgba(0,0,0,.055);
+  --select:#0a63d8;
+  --tint:#2d7ff0;
+  --red:#ff5f57;--red-edge:#e0443e;
+  --yellow:#febc2e;--yellow-edge:#dea123;
+  --green:#28c840;--green-edge:#1aab29;
+  --ease-out:cubic-bezier(.2,.8,.2,1);
+  --ease-in:cubic-bezier(.4,0,1,1);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;overflow:hidden;font-family:var(--font);color:var(--ink);background:#2c2a4a;-webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0}
+:focus-visible{outline:3px solid rgba(10,99,216,.55);outline-offset:2px;border-radius:8px}
+
+/* ============================================================
+   DESKTOP + WALLPAPER
+   ============================================================ */
+.desktop{position:fixed;inset:0;overflow:hidden}
+.wallpaper{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+/* ============================================================
+   MENU BAR (decorative)
+   ============================================================ */
+.menubar{position:absolute;z-index:5;top:0;left:0;right:0;height:28px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;
+  background:rgba(40,36,66,.28);backdrop-filter:blur(30px) saturate(1.6);-webkit-backdrop-filter:blur(30px) saturate(1.6);color:#fff;font-size:13px;pointer-events:none;text-shadow:0 1px 1px rgba(0,0,0,.08)}
+.menubar .left,.menubar .right{display:flex;align-items:center;gap:18px}
+.menubar .mono{width:17px;height:17px;border-radius:5px;display:grid;place-items:center;background:#fff;color:#2c2a4a;font-size:10.5px;font-weight:800;letter-spacing:-.02em}
+.menubar b{font-weight:700}
+.menubar svg{display:block;opacity:.95}
+.menubar .clock{font-variant-numeric:tabular-nums;letter-spacing:.01em}
+
+/* ============================================================
+   FINDER WINDOW
+   ============================================================ */
+.stage{position:absolute;inset:28px 0 92px;display:grid;place-items:center;padding:16px;pointer-events:none}
+.finder{pointer-events:auto;width:min(900px,100%);height:min(570px,100%);display:grid;grid-template-columns:192px 1fr;border-radius:var(--win-radius);overflow:hidden;
+  background:var(--pane);
+  box-shadow:0 0 0 .5px rgba(0,0,0,.28),0 0 0 1px rgba(255,255,255,.18) inset,0 30px 80px rgba(10,6,30,.42),0 10px 24px rgba(10,6,30,.22);
+  transform-origin:50% 60%;will-change:transform,opacity}
+.finder.is-closed{visibility:hidden;pointer-events:none}
+
+/* sidebar */
+.sidebar{background:var(--sidebar);backdrop-filter:blur(40px) saturate(1.8);-webkit-backdrop-filter:blur(40px) saturate(1.8);border-right:1px solid rgba(0,0,0,.07);padding:16px 10px;display:flex;flex-direction:column;gap:20px;overflow:hidden}
+.lights{display:flex;gap:8px;padding:2px 8px 0;height:20px;align-items:center}
+.light{width:12px;height:12px;border-radius:50%;position:relative;display:grid;place-items:center;flex:none}
+.light.red{background:var(--red);box-shadow:inset 0 0 0 .5px var(--red-edge);cursor:default}
+.light.yellow{background:var(--yellow);box-shadow:inset 0 0 0 .5px var(--yellow-edge)}
+.light.green{background:var(--green);box-shadow:inset 0 0 0 .5px var(--green-edge)}
+.light.red svg{opacity:0;transition:opacity .15s}
+.lights:hover .light.red svg,.light.red:focus-visible svg{opacity:1}
+.light.red:active{filter:brightness(.82)}
+.side-group{display:flex;flex-direction:column;gap:1px}
+.side-label{font-size:11px;font-weight:700;color:var(--sidebar-muted);padding:0 10px 5px}
+.side-item{display:flex;align-items:center;gap:8px;height:28px;padding:0 10px;border-radius:6px;font-size:13px;color:var(--sidebar-ink);text-align:left;width:100%;cursor:default;transition:background-color .15s}
+.side-item svg{flex:none;color:var(--tint)}
+button.side-item:hover{background:rgba(0,0,0,.05)}
+.side-item.active{background:rgba(0,0,0,.09)}
+.side-item.static{pointer-events:none}
+.side-item.static svg{color:#8e8d96}
+
+/* main pane */
+.main{display:grid;grid-template-rows:52px 1fr 28px;min-width:0;background:var(--pane)}
+.toolbar{display:flex;align-items:center;gap:6px;padding:0 14px 0 12px;border-bottom:1px solid var(--hair)}
+.nav-btn{width:30px;height:28px;border-radius:6px;display:grid;place-items:center;color:#56565b;transition:background-color .15s,opacity .15s;cursor:default}
+.nav-btn:hover:not(:disabled){background:var(--hover)}
+.nav-btn:disabled{opacity:.28}
+.title{font-size:15px;font-weight:700;margin-left:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
+.spacer{flex:1}
+.tool-deco{display:flex;align-items:center;gap:14px;color:#8a8a90;margin-right:10px}
+.tool-deco .seg{display:flex;border-radius:6px;overflow:hidden}
+.tool-deco .seg span{width:28px;height:24px;display:grid;place-items:center}
+.tool-deco .seg span.on{background:rgba(0,0,0,.07);color:#3a3a3f;border-radius:6px}
+.search{width:168px;height:28px;border-radius:7px;background:#f1f1f3;display:flex;align-items:center;gap:6px;padding:0 9px;color:#a1a1a6;font-size:13px}
+
+.content{position:relative;overflow:auto;padding:22px 26px 26px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:14px 8px;align-content:start}
+.item{display:flex;flex-direction:column;align-items:center;gap:6px;padding:6px 4px 8px;border-radius:10px;cursor:default;text-align:center;outline:none}
+.item .ico{width:96px;height:80px;display:grid;place-items:center;border-radius:10px;transition:background-color .18s,transform .25s var(--ease-out)}
+.item .ico svg{width:78px;height:auto;filter:drop-shadow(0 2px 3px rgba(0,0,0,.10));transition:transform .3s var(--ease-out)}
+.item .ico svg.file{width:58px}
+.item:hover .ico{background:var(--hover)}
+.item:hover .ico svg{transform:translateY(-2px)}
+.item:active .ico svg{transform:scale(.96)}
+.item .name{font-size:12.5px;line-height:1.25;padding:1px 6px;border-radius:4px;max-width:112px;word-break:break-word;transition:background-color .12s,color .12s}
+.item .sub{font-size:11px;color:var(--muted);margin-top:-3px}
+.item.selected .ico,.item:focus-visible .ico{background:rgba(0,0,0,.09)}
+.item.selected .name,.item:focus-visible .name{background:var(--select);color:#fff}
+.item.selected .sub{color:#4b84d6}
+
+.pathbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 14px;border-top:1px solid #ededf0;font-size:11.5px;color:#6e6e73;white-space:nowrap}
+.crumbs{display:flex;align-items:center;gap:4px;overflow:hidden}
+.crumb{display:flex;align-items:center;gap:5px;padding:2px 5px;border-radius:4px;cursor:default}
+button.crumb:hover{background:var(--hover)}
+.crumb svg{color:var(--tint)}
+.crumb-sep{color:#b5b5ba}
+
+/* ============================================================
+   DOCK (hover only — not clickable)
+   ============================================================ */
+.dock-wrap{position:absolute;z-index:6;left:0;right:0;bottom:8px;display:flex;justify-content:center;pointer-events:none}
+.dock{pointer-events:auto;height:70px;display:flex;align-items:flex-end;gap:6px;padding:0 8px 8px;border-radius:20px;
+  background:rgba(255,255,255,.22);backdrop-filter:blur(30px) saturate(1.7);-webkit-backdrop-filter:blur(30px) saturate(1.7);
+  box-shadow:0 0 0 .5px rgba(255,255,255,.35) inset,0 0 0 .5px rgba(0,0,0,.18),0 10px 30px rgba(10,6,30,.25);cursor:default}
+.dock-item{--s:1;position:relative;width:calc(52px * var(--s));height:calc(52px * var(--s));flex:none;transition:width .16s var(--ease-out),height .16s var(--ease-out)}
+.dock.tracking .dock-item{transition:width .06s linear,height .06s linear}
+.dock-item svg{width:100%;height:100%;display:block;filter:drop-shadow(0 3px 5px rgba(0,0,0,.22));pointer-events:none}
+.dock-item .tip{position:absolute;left:50%;bottom:calc(100% + 12px);transform:translate(-50%,4px);padding:4px 10px;border-radius:6px;background:rgba(40,40,46,.86);color:#fff;font-size:12px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s,transform .15s}
+.dock-item .tip:after{content:"";position:absolute;left:50%;top:100%;transform:translateX(-50%);border:5px solid transparent;border-top-color:rgba(40,40,46,.86)}
+.dock-item:hover .tip{opacity:1;transform:translate(-50%,0)}
+.dock-item .dot{position:absolute;left:50%;bottom:-6px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:rgba(255,255,255,.9);opacity:0;transition:opacity .3s}
+.dock-item.running .dot{opacity:1}
+.dock-sep{width:1px;align-self:stretch;margin:10px 4px 2px;background:rgba(255,255,255,.4)}
+
+/* ============================================================
+   FULL-SCREEN PROJECT VIEWER
+   ============================================================ */
+.viewer{position:fixed;inset:0;z-index:50;display:grid;grid-template-rows:44px 1fr;background:#f6f6f8;will-change:clip-path}
+.v-bar{position:relative;display:flex;align-items:center;gap:14px;padding:0 14px;background:rgba(246,246,248,.94);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid #dcdce0}
+.v-bar .lights{padding:0 4px 0 2px}
+.v-back{display:flex;align-items:center;gap:4px;height:28px;padding:0 12px 0 8px;border-radius:7px;font-size:13px;font-weight:600;color:#3a3a3f;background:rgba(0,0,0,.05);cursor:default;transition:background-color .15s,transform .15s}
+.v-back:hover{background:rgba(0,0,0,.09)}
+.v-back:active{transform:scale(.97)}
+.v-title{position:absolute;left:50%;transform:translateX(-50%);font-size:13px;font-weight:700;color:#3a3a3f;white-space:nowrap;max-width:46vw;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+.v-hint{margin-left:auto;font-size:11.5px;color:#9a9aa0;display:flex;align-items:center;gap:6px}
+.v-hint kbd{font-family:var(--font);font-size:10.5px;padding:1px 6px;border-radius:4px;border:1px solid #d2d2d7;background:#fff;color:#6e6e73}
+.v-body{position:relative;overflow:hidden;background:#fff}
+.v-body iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff;opacity:0;transition:opacity .35s ease}
+.v-body iframe.ready{opacity:1}
+.loader{position:absolute;inset:0;display:grid;place-items:center;align-content:center;gap:14px;color:#86868b;font-size:13px;transition:opacity .3s}
+.loader.done{opacity:0;pointer-events:none}
+.spinner{width:26px;height:26px;border-radius:50%;border:2.5px solid #e2e2e6;border-top-color:#8e8e93;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.placeholder{position:absolute;inset:0;display:grid;place-items:center;align-content:center;gap:10px;padding:24px;text-align:center;background:linear-gradient(180deg,#fbfbfd,#f2f2f5)}
+.placeholder svg{width:88px;height:auto;margin-bottom:8px;filter:drop-shadow(0 6px 14px rgba(0,0,0,.12))}
+.placeholder h2{margin:0;font-size:24px;letter-spacing:-.02em}
+.placeholder p{margin:0;max-width:380px;color:#6e6e73;font-size:14px;line-height:1.55}
+.placeholder .tag{margin-top:8px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#a1a1a6}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width:760px){
+  .finder{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .toolbar .lights{display:flex}
+  .tool-deco,.search{display:none}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}
+  .item .ico{width:84px;height:72px}
+  .item .ico svg{width:66px}.item .ico svg.file{width:44px}
+  .menubar .hide-sm{display:none}
+  .dock-item{width:calc(40px * var(--s));height:calc(40px * var(--s))}
+  .dock{height:56px;gap:4px;padding-bottom:7px;border-radius:16px}
+  .dock .hide-sm{display:none}
+  .stage{bottom:76px}
+  .v-hint{display:none}
+}
+@media (min-width:761px){.toolbar .lights{display:none}}
+@media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<!-- Shared SVG gradients -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="gFolderBack" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4fa0e6"/><stop offset="1" stop-color="#3d8fdb"/></linearGradient>
+    <linearGradient id="gFolderFront" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fd0fc"/><stop offset="1" stop-color="#62b2f2"/></linearGradient>
+    <linearGradient id="dFiles" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5cc0ff"/><stop offset="1" stop-color="#1673ea"/></linearGradient>
+    <linearGradient id="dChat" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8f80ff"/><stop offset="1" stop-color="#5a44e2"/></linearGradient>
+    <linearGradient id="dGallery" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffc061"/><stop offset="1" stop-color="#ff5f6d"/></linearGradient>
+    <linearGradient id="dMusicNote" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff7eb3"/><stop offset="1" stop-color="#ff9a44"/></linearGradient>
+    <linearGradient id="dDark" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3a44"/><stop offset="1" stop-color="#1b1b21"/></linearGradient>
+    <linearGradient id="dSettings" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9d9de"/><stop offset="1" stop-color="#9a9aa2"/></linearGradient>
+    <linearGradient id="dDownloads" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7cc6ff"/><stop offset="1" stop-color="#3a8ff0"/></linearGradient>
+    <linearGradient id="dTrash" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f4f7"/><stop offset="1" stop-color="#c9c9d0"/></linearGradient>
+  </defs>
+</svg>
+
+<div class="desktop">
+  <!-- Original illustrated wallpaper: dusk coastline -->
+  <svg class="wallpaper" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs>
+      <linearGradient id="wSky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#2d3566"/><stop offset=".32" stop-color="#5f5f9e"/><stop offset=".55" stop-color="#b585ad"/><stop offset=".7" stop-color="#eaa9a1"/><stop offset=".78" stop-color="#f6c3a6"/>
+      </linearGradient>
+      <linearGradient id="wSea" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#8f86b4"/><stop offset=".35" stop-color="#5a5d92"/><stop offset="1" stop-color="#232748"/>
+      </linearGradient>
+      <linearGradient id="wCliff" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a3f62"/><stop offset="1" stop-color="#1c1d33"/></linearGradient>
+      <linearGradient id="wCliff2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2a2843"/><stop offset="1" stop-color="#4e4468"/></linearGradient>
+      <radialGradient id="wGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(980 640) scale(620 300)">
+        <stop offset="0" stop-color="#ffe0bf" stop-opacity=".85"/><stop offset="1" stop-color="#ffe0bf" stop-opacity="0"/>
+      </radialGradient>
+      <filter id="wBlur" x="-50%" y="-300%" width="200%" height="700%"><feGaussianBlur stdDeviation="18"/></filter>
+    </defs>
+    <rect width="1600" height="1000" fill="url(#wSky)"/>
+    <rect width="1600" height="1000" fill="url(#wGlow)"/>
+    <!-- far ridge -->
+    <path d="M0 640 C180 600 300 615 430 590 C560 566 690 600 820 612 C960 625 1060 598 1180 604 L1600 610 L1600 660 L0 660Z" fill="#8a7fb0" opacity=".55"/>
+    <path d="M0 655 C220 628 380 640 560 626 C760 612 900 640 1100 634 C1300 628 1460 640 1600 632 L1600 670 L0 670Z" fill="#6f679b" opacity=".6"/>
+    <!-- sea -->
+    <rect y="660" width="1600" height="340" fill="url(#wSea)"/>
+    <g opacity=".35" stroke="#ffd9c2" stroke-linecap="round">
+      <path d="M820 690 H1120" stroke-width="3"/><path d="M860 712 H1080" stroke-width="2"/><path d="M900 736 H1040" stroke-width="2"/><path d="M930 762 H1010" stroke-width="1.5"/>
+    </g>
+    <!-- left headland -->
+    <path d="M0 470 C110 468 200 515 285 572 C365 628 465 678 640 706 C470 742 290 806 0 884Z" fill="url(#wCliff2)"/>
+    <path d="M0 600 C100 604 180 640 260 690 C320 728 390 760 470 790 C330 830 170 860 0 900Z" fill="#1d1c31" opacity=".75"/>
+    <path d="M0 880 C180 846 360 870 560 1000 L0 1000Z" fill="#141427"/>
+    <!-- right cliffs -->
+    <path d="M1600 300 C1500 320 1440 380 1380 420 C1320 460 1290 520 1230 560 C1180 594 1130 620 1080 650 C1040 676 1010 700 990 730 L1600 760Z" fill="url(#wCliff)"/>
+    <path d="M1600 470 C1520 490 1460 540 1400 590 C1340 640 1280 700 1210 744 C1170 770 1150 800 1130 840 L1600 860Z" fill="#232238"/>
+    <path d="M1600 640 C1500 680 1420 740 1340 800 C1290 838 1240 880 1200 1000 L1600 1000Z" fill="#141427"/>
+  </svg>
+
+  <!-- Menu bar (decorative) -->
+  <header class="menubar" aria-hidden="true">
+    <div class="left">
+      <span class="mono">S</span>
+      <b>Finder</b>
+      <span class="hide-sm">File</span><span class="hide-sm">Edit</span><span class="hide-sm">View</span><span class="hide-sm">Go</span><span class="hide-sm">Window</span><span class="hide-sm">Help</span>
+    </div>
+    <div class="right">
+      <svg class="hide-sm" width="24" height="12" viewBox="0 0 24 12"><rect x=".5" y=".5" width="20" height="11" rx="3" fill="none" stroke="#fff" opacity=".6"/><rect x="2.5" y="2.5" width="13" height="7" rx="1.5" fill="#fff"/><rect x="21.5" y="4" width="1.8" height="4" rx=".9" fill="#fff" opacity=".6"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 4.2a9.5 9.5 0 0 1 13 0"/><path d="M4 6.9a6 6 0 0 1 8 0"/><circle cx="8" cy="9.8" r="1" fill="#fff" stroke="none"/></svg>
+      <svg class="hide-sm" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#fff" stroke-width="1.6"><circle cx="6" cy="6" r="4.5"/><path d="M9.4 9.4 13 13" stroke-linecap="round"/></svg>
+      <svg class="hide-sm" width="16" height="14" viewBox="0 0 16 14" fill="#fff"><rect x="0" y="1" width="16" height="5" rx="2.5" opacity=".55"/><circle cx="12.5" cy="3.5" r="1.8"/><rect x="0" y="8" width="16" height="5" rx="2.5" opacity=".55"/><circle cx="3.5" cy="10.5" r="1.8"/></svg>
+      <span class="clock" id="clock"></span>
+    </div>
+  </header>
+
+  <!-- Finder window -->
+  <div class="stage">
+    <section class="finder is-closed" id="finder" aria-label="Finder — Projects">
+      <aside class="sidebar">
+        <div class="lights">
+          <button class="light red" data-close-finder aria-label="Close window"><svg width="6" height="6" viewBox="0 0 6 6" stroke="#7a1a14" stroke-width="1.2" stroke-linecap="round"><path d="M1 1l4 4M5 1 1 5"/></svg></button>
+          <span class="light yellow" aria-hidden="true"></span>
+          <span class="light green" aria-hidden="true"></span>
+        </div>
+        <nav class="side-group" aria-label="Favourites">
+          <div class="side-label">Favourites</div>
+          <button class="side-item" data-go="root">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="9" rx="1.5"/><path d="M5.5 14h5M8 11.5V14"/></svg>
+            Projects
+          </button>
+          <button class="side-item" data-go="uiux">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M1.5 4.5a1.5 1.5 0 0 1 1.5-1.5h3l1.5 1.5H13a1.5 1.5 0 0 1 1.5 1.5v6A1.5 1.5 0 0 1 13 13.5H3A1.5 1.5 0 0 1 1.5 12z"/></svg>
+            UI/UX
+          </button>
+          <button class="side-item" data-go="coding">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M1.5 4.5a1.5 1.5 0 0 1 1.5-1.5h3l1.5 1.5H13a1.5 1.5 0 0 1 1.5 1.5v6A1.5 1.5 0 0 1 13 13.5H3A1.5 1.5 0 0 1 1.5 12z"/></svg>
+            Coding
+          </button>
+        </nav>
+        <div class="side-group" aria-hidden="true">
+          <div class="side-label">Locations</div>
+          <div class="side-item static">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="8" rx="1.2"/><path d="M1 13h14" stroke-linecap="round"/></svg>
+            Sachin's MacBook
+          </div>
+        </div>
+      </aside>
+
+      <div class="main">
+        <div class="toolbar">
+          <div class="lights">
+            <button class="light red" data-close-finder aria-label="Close window"><svg width="6" height="6" viewBox="0 0 6 6" stroke="#7a1a14" stroke-width="1.2" stroke-linecap="round"><path d="M1 1l4 4M5 1 1 5"/></svg></button>
+            <span class="light yellow" aria-hidden="true"></span>
+            <span class="light green" aria-hidden="true"></span>
+          </div>
+          <button class="nav-btn" id="btnBack" aria-label="Back" disabled><svg width="9" height="14" viewBox="0 0 9 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 1 1.5 7 7 13"/></svg></button>
+          <button class="nav-btn" id="btnFwd" aria-label="Forward" disabled><svg width="9" height="14" viewBox="0 0 9 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 1l5.5 6L2 13"/></svg></button>
+          <div class="title" id="title">Projects</div>
+          <div class="spacer"></div>
+          <div class="tool-deco" aria-hidden="true">
+            <div class="seg">
+              <span class="on"><svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="1" y="1" width="5" height="5" rx="1.2"/><rect x="8" y="1" width="5" height="5" rx="1.2"/><rect x="1" y="8" width="5" height="5" rx="1.2"/><rect x="8" y="8" width="5" height="5" rx="1.2"/></svg></span>
+              <span><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M1.5 3h11M1.5 7h11M1.5 11h11"/></svg></span>
+            </div>
+            <svg width="14" height="16" viewBox="0 0 14 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6H3a1.5 1.5 0 0 0-1.5 1.5v6A1.5 1.5 0 0 0 3 15h8a1.5 1.5 0 0 0 1.5-1.5v-6A1.5 1.5 0 0 0 11 6H9.5M7 1v9M4.5 3.5 7 1l2.5 2.5"/></svg>
+          </div>
+          <div class="search" aria-hidden="true">
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="6" cy="6" r="4.5"/><path d="M9.4 9.4 13 13" stroke-linecap="round"/></svg>
+            Search
+          </div>
+        </div>
+
+        <div class="content" id="content"><div class="grid" id="grid" role="list"></div></div>
+
+        <footer class="pathbar">
+          <div class="crumbs" id="crumbs"></div>
+          <div id="count"></div>
+        </footer>
+      </div>
+    </section>
+  </div>
+
+  <!-- Dock: hover effects only, nothing is clickable -->
+  <div class="dock-wrap">
+    <div class="dock" id="dock" aria-hidden="true"></div>
+  </div>
+</div>
+
+<!-- Full-screen project viewer -->
+<div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-labelledby="vTitle" hidden>
+  <div class="v-bar">
+    <div class="lights">
+      <button class="light red" id="vClose" aria-label="Close project"><svg width="6" height="6" viewBox="0 0 6 6" stroke="#7a1a14" stroke-width="1.2" stroke-linecap="round"><path d="M1 1l4 4M5 1 1 5"/></svg></button>
+      <span class="light yellow" aria-hidden="true"></span>
+      <span class="light green" aria-hidden="true"></span>
+    </div>
+    <button class="v-back" id="vBack"><svg width="8" height="12" viewBox="0 0 9 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 1 1.5 7 7 13"/></svg><span id="vBackLabel">Back</span></button>
+    <div class="v-title" id="vTitle"></div>
+    <div class="v-hint"><kbd>esc</kbd> to close</div>
+  </div>
+  <div class="v-body" id="vBody"></div>
+</div>
+
+<script>window.CASE_CHUNKS = {
+ "TAGX-publishable-case-study.html": [
+  "cases/tagx-publishable-case-study-1.js"
+ ],
+ "POP_UPI_Desktop_CaseStudy_Animated.html": [
+  "cases/pop-upi-case-study-1.js"
+ ],
+ "RBI_CaseStudy_Animated.html": [
+  "cases/rbi-casestudy-animated-1.js"
+ ],
+ "Portfolio_design-system.html": [
+  "cases/portfolio-design-system-1.js"
+ ]
+};</script>
+<script>
+/* =====================================================================
+   CONFIG — edit names and links here.
+   `src` is a path or URL to the project page. Case studies are linked by
+   file name, so keep this page in the same folder as them (Postfolio2.0).
+   Leave it '' to show a
+   "link coming soon" screen until you have the link.
+   ===================================================================== */
+const CONFIG = {
+  reopenDelay: 1500,           // ms before the Finder window pops back up after closing
+  folders: {
+    uiux: {
+      title: 'UI/UX',
+      glyph: 'pen',
+      items: [
+        { name: 'TAGX',         src: 'TAGX-publishable-case-study.html', mark: 'TX',  colors: ['#7657ff', '#211a50'], kind: 'Case study' },
+        { name: 'POP UPI',      src: 'POP_UPI_Desktop_CaseStudy_Animated.html', mark: 'UPI', colors: ['#7b36ff', '#ff5b18'], kind: 'Case study' },
+        { name: 'RBI Redesign', src: 'RBI_CaseStudy_Animated.html', mark: 'RBI', colors: ['#164f86', '#c8740d'], kind: 'Case study' },
+        { name: '3D Portfolio', src: 'Portfolio_design-system.html', mark: '3D',  colors: ['#f4c48c', '#b0623a'], kind: 'Case study' }
+      ]
+    },
+    coding: {
+      title: 'Coding',
+      glyph: 'code',
+      items: [
+        { name: '1', src: '', type: 'code', kind: 'Coding project' },
+        { name: '2', src: '', type: 'code', kind: 'Coding project' },
+        { name: '3', src: '', type: 'code', kind: 'Coding project' },
+        { name: '4', src: '', type: 'code', kind: 'Coding project' }
+      ]
+    }
+  }
+};
+
+/* ===================================================================== */
+const $ = s => document.querySelector(s);
+const finder = $('#finder'), grid = $('#grid'), content = $('#content');
+const btnBack = $('#btnBack'), btnFwd = $('#btnFwd'), titleEl = $('#title');
+const crumbsEl = $('#crumbs'), countEl = $('#count');
+const viewer = $('#viewer'), vBody = $('#vBody'), vTitle = $('#vTitle'), vBackLabel = $('#vBackLabel');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const dur = ms => reduce ? 1 : ms;
+
+let hist = ['root'], idx = 0;
+let busy = false, finderOpen = false, viewerOpen = false, lastIcon = null, reopenTimer = null;
+const here = () => hist[idx];
+
+/* ---------- icons ---------- */
+const GLYPHS = {
+  pen: '<path d="M0-13 9 1 4 11H-4L-9 1Z"/><circle cx="0" cy="1.5" r="2.4"/><path d="M0-13V-1"/>',
+  code: '<path d="M-7-9-15 0l8 9M7-9l8 9-8 9M3-12-3 12"/>'
+};
+function folderSVG(glyph){
+  const g = GLYPHS[glyph] || '';
+  return `<svg viewBox="0 0 100 80" aria-hidden="true">
+    <path d="M10 8a6 6 0 0 1 6-6h21a6 6 0 0 1 4.3 1.8L47 10h37a6 6 0 0 1 6 6v8H10z" fill="url(#gFolderBack)"/>
+    <rect x="10" y="12" width="80" height="58" rx="6" fill="url(#gFolderBack)"/>
+    <rect x="5" y="21" width="90" height="56" rx="6" fill="url(#gFolderFront)"/>
+    <rect x="9" y="21.5" width="82" height="1.6" rx=".8" fill="#fff" opacity=".55"/>
+    <g transform="translate(50 50)" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <g stroke="#fff" opacity=".45" transform="translate(0 1)">${g}</g>
+      <g stroke="#2f7fc6" opacity=".62">${g}</g>
+    </g>
+  </svg>`;
+}
+let gid = 0;
+function caseFileSVG(item){
+  const id = 'cf' + (gid++);
+  const [a, b] = item.colors;
+  const fs = item.mark.length > 2 ? 10 : 12;
+  return `<svg class="file" viewBox="0 0 64 80" aria-hidden="true">
+    <defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs>
+    <path d="M6 2h36l16 16v56a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V6a4 4 0 0 1 4-4z" fill="#fff" stroke="#d2d2d8"/>
+    <path d="M42 2v12a4 4 0 0 0 4 4h12" fill="#ededf2" stroke="#d2d2d8" stroke-linejoin="round"/>
+    <rect x="9" y="23" width="46" height="28" rx="4" fill="url(#${id})"/>
+    <text x="32" y="${41 + (fs === 12 ? .5 : 0)}" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Inter,Arial,sans-serif" font-size="${fs}" font-weight="800" letter-spacing="-.3" fill="#fff">${item.mark}</text>
+    <rect x="9" y="57" width="34" height="3.5" rx="1.75" fill="#d6d6dc"/>
+    <rect x="9" y="64" width="24" height="3.5" rx="1.75" fill="#e5e5ea"/>
+  </svg>`;
+}
+function codeFileSVG(){
+  return `<svg class="file" viewBox="0 0 64 80" aria-hidden="true">
+    <path d="M6 2h36l16 16v56a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V6a4 4 0 0 1 4-4z" fill="#1f2029" stroke="#121218"/>
+    <path d="M42 2v12a4 4 0 0 0 4 4h12" fill="#3a3b4a" stroke="#121218" stroke-linejoin="round"/>
+    <g stroke-linecap="round" stroke-width="3.2">
+      <path d="M10 26h14" stroke="#c792ea"/><path d="M27 26h12" stroke="#82aaff"/>
+      <path d="M15 34h18" stroke="#c3e88d"/>
+      <path d="M15 42h8" stroke="#f78c6c"/><path d="M26 42h16" stroke="#89ddff"/>
+      <path d="M20 50h20" stroke="#c3e88d"/>
+      <path d="M15 58h12" stroke="#82aaff"/>
+      <path d="M10 66h6" stroke="#c792ea"/>
+    </g>
+  </svg>`;
+}
+const iconFor = item => item.folder ? folderSVG(item.glyph) : item.type === 'code' ? codeFileSVG() : caseFileSVG(item);
+
+/* ---------- Finder rendering ---------- */
+function itemsAt(loc){
+  if (loc === 'root') {
+    return Object.entries(CONFIG.folders).map(([key, f]) => ({ name: f.title, folder: key, glyph: f.glyph, sub: f.items.length + ' items' }));
+  }
+  return CONFIG.folders[loc].items;
+}
+const titleOf = loc => loc === 'root' ? 'Projects' : CONFIG.folders[loc].title;
+
+function render(){
+  const loc = here();
+  const items = itemsAt(loc);
+  grid.innerHTML = '';
+  items.forEach(item => {
+    const el = document.createElement('button');
+    el.className = 'item';
+    el.setAttribute('role', 'listitem');
+    el.setAttribute('aria-label', item.folder ? `Open ${item.name} folder` : `Open ${item.name}`);
+    el.innerHTML = `<span class="ico">${iconFor(item)}</span><span class="name">${item.name}</span>${item.sub ? `<span class="sub">${item.sub}</span>` : ''}`;
+    el.addEventListener('click', () => activate(item, el));
+    grid.appendChild(el);
+  });
+  titleEl.textContent = titleOf(loc);
+  finder.setAttribute('aria-label', 'Finder — ' + titleOf(loc));
+  countEl.textContent = items.length + (items.length === 1 ? ' item' : ' items');
+  btnBack.disabled = idx === 0;
+  btnFwd.disabled = idx === hist.length - 1;
+  document.querySelectorAll('.side-item[data-go]').forEach(b => b.classList.toggle('active', b.dataset.go === loc));
+  const folderIco = '<svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M1.5 4.5A1.5 1.5 0 0 1 3 3h3l1.5 1.5H13a1.5 1.5 0 0 1 1.5 1.5v6A1.5 1.5 0 0 1 13 13.5H3A1.5 1.5 0 0 1 1.5 12z"/></svg>';
+  crumbsEl.innerHTML = loc === 'root'
+    ? `<span class="crumb">${folderIco}Projects</span>`
+    : `<button class="crumb" data-go="root">${folderIco}Projects</button><span class="crumb-sep">›</span><span class="crumb">${folderIco}${titleOf(loc)}</span>`;
+  content.scrollTop = 0;
+}
+
+function activate(item, el){
+  if (busy || viewerOpen) return;
+  grid.querySelectorAll('.item.selected').forEach(n => n.classList.remove('selected'));
+  el.classList.add('selected');
+  setTimeout(() => {
+    if (item.folder) navigate(item.folder);
+    else openViewer(item, el);
+  }, dur(110));
+}
+
+function transition(dir){
+  busy = true;
+  const out = grid.animate(
+    [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: `translateX(${-14 * dir}px)` }],
+    { duration: dur(130), easing: 'ease-in', fill: 'forwards' });
+  out.onfinish = () => {
+    render();
+    out.cancel();
+    const inn = grid.animate(
+      [{ opacity: 0, transform: `translateX(${14 * dir}px)` }, { opacity: 1, transform: 'none' }],
+      { duration: dur(240), easing: 'cubic-bezier(.2,.8,.2,1)' });
+    inn.onfinish = () => { busy = false; };
+  };
+}
+function navigate(loc){
+  if (busy || viewerOpen || loc === here()) return;
+  hist = hist.slice(0, idx + 1); hist.push(loc); idx++;
+  transition(loc === 'root' ? -1 : 1);
+}
+function goBack(){ if (!busy && !viewerOpen && idx > 0){ idx--; transition(-1); } }
+function goFwd(){ if (!busy && !viewerOpen && idx < hist.length - 1){ idx++; transition(1); } }
+
+btnBack.addEventListener('click', goBack);
+btnFwd.addEventListener('click', goFwd);
+document.addEventListener('click', e => {
+  const go = e.target.closest('[data-go]');
+  if (go && finder.contains(go)) navigate(go.dataset.go);
+});
+
+/* ---------- Finder open / close / auto-reopen ---------- */
+function openFinder(){
+  clearTimeout(reopenTimer);
+  hist = ['root']; idx = 0; render();
+  finder.classList.remove('is-closed');
+  finderOpen = true; busy = true;
+  setRunning(true);
+  bounceFiles();
+  const a = finder.animate([
+    { opacity: 0, transform: 'translateY(22px) scale(.9)' },
+    { opacity: 1, transform: 'translateY(-2px) scale(1.006)', offset: .72 },
+    { opacity: 1, transform: 'none' }
+  ], { duration: dur(560), easing: 'cubic-bezier(.2,.8,.2,1)' });
+  a.onfinish = () => { busy = false; };
+}
+function closeFinder(){
+  if (!finderOpen || viewerOpen) return;
+  finderOpen = false; busy = true;
+  const a = finder.animate([
+    { opacity: 1, transform: 'none' },
+    { opacity: 0, transform: 'translateY(12px) scale(.92)' }
+  ], { duration: dur(240), easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' });
+  a.onfinish = () => {
+    finder.classList.add('is-closed');
+    a.cancel();
+    busy = false;
+    setRunning(false);
+    reopenTimer = setTimeout(openFinder, CONFIG.reopenDelay);
+  };
+}
+document.querySelectorAll('[data-close-finder]').forEach(b => b.addEventListener('click', closeFinder));
+
+/* ---------- Embedded case studies (all-in-one / review builds only) ----------
+   All-in-one: <script class="embedded-case" data-file="..."> holds a base64 copy.
+   Review build: window.CASE_CHUNKS maps a file name to script files that each add
+   one piece of the page to window.__caseParts[file].
+   In both cases the page is written straight into the frame (srcdoc), which works
+   in strict viewers that block blob: or file links. Otherwise the file is loaded
+   by its name (linked build). */
+const pageCache = {};
+function addBase(html){
+  // keep in-page links like #research inside the case study
+  return html.replace(/<head([^>]*)>/i, '<head$1><base href="about:srcdoc">');
+}
+function loadScript(url){
+  return new Promise((res, rej) => {
+    const el = document.createElement('script');
+    el.src = url; el.onload = res; el.onerror = () => rej(new Error('Could not load ' + url));
+    document.head.appendChild(el);
+  });
+}
+async function embeddedPage(file){
+  if (file in pageCache) return pageCache[file];
+  const el = document.querySelector(`script.embedded-case[data-file="${file}"]`);
+  if (el) {
+    const bin = atob(el.textContent.trim());
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return (pageCache[file] = addBase(new TextDecoder('utf-8').decode(bytes)));
+  }
+  const chunks = window.CASE_CHUNKS && window.CASE_CHUNKS[file];
+  if (chunks) {
+    window.__caseParts = window.__caseParts || {};
+    window.__caseParts[file] = [];
+    for (const url of chunks) await loadScript(url);
+    return (pageCache[file] = addBase(window.__caseParts[file].join('')));
+  }
+  return null;
+}
+
+/* ---------- Full-screen viewer ---------- */
+function rectInset(el){
+  const W = innerWidth, H = innerHeight;
+  if (el && el.isConnected) {
+    const r = el.getBoundingClientRect();
+    if (r.width) return `inset(${r.top}px ${W - r.right}px ${H - r.bottom}px ${r.left}px round 14px)`;
+  }
+  return `inset(${H * .42}px ${W * .42}px ${H * .42}px ${W * .42}px round 14px)`;
+}
+function openViewer(item, el){
+  if (viewerOpen) return;
+  viewerOpen = true;
+  lastIcon = el.querySelector('.ico') || el;
+  const folderTitle = titleOf(here());
+  vTitle.textContent = item.type === 'code' ? `Project ${item.name}` : `${item.name} — ${item.kind || 'Project'}`;
+  vBackLabel.textContent = folderTitle;
+  vBody.innerHTML = '';
+
+  let frame = null, loader = null;
+  if (item.src) {
+    loader = document.createElement('div');
+    loader.className = 'loader';
+    loader.innerHTML = `<div class="spinner"></div><div>Opening ${item.name}…</div>`;
+    vBody.appendChild(loader);
+    frame = document.createElement('iframe');
+    frame.title = item.name;
+    frame.addEventListener('load', () => {
+      if (!frame.dataset.requested) return;   // ignore the initial empty-frame load
+      frame.classList.add('ready'); loader.classList.add('done');
+    });
+    vBody.appendChild(frame);
+  } else {
+    const ph = document.createElement('div');
+    ph.className = 'placeholder';
+    ph.innerHTML = `${iconFor(item).replace('class="file"', '')}
+      <h2>${item.type === 'code' ? 'Project ' + item.name : item.name}</h2>
+      <p>This project is being prepared. The full ${item.type === 'code' ? 'project' : 'case study'} will open here soon.</p>
+      <div class="tag">Link coming soon</div>`;
+    vBody.appendChild(ph);
+  }
+
+  viewer.hidden = false;
+  const a = viewer.animate([
+    { clipPath: rectInset(lastIcon), opacity: 1 },
+    { clipPath: 'inset(0px 0px 0px 0px round 0px)', opacity: 1 }
+  ], { duration: dur(520), easing: 'cubic-bezier(.2,.8,.2,1)' });
+  a.onfinish = () => {
+    if (frame) {                       // load after the zoom so the animation stays smooth
+      embeddedPage(item.src).then(embedded => {
+        if (!frame.isConnected) return;                 // closed while loading
+        frame.dataset.requested = '1';
+        if (embedded !== null) frame.srcdoc = embedded; // all-in-one / review build
+        else frame.src = item.src;                      // linked build
+      }).catch(() => {
+        if (loader) loader.querySelector('div:last-child').textContent = 'This project could not be loaded.';
+      });
+    }
+    $('#vBack').focus({ preventScroll: true });
+  };
+}
+function closeViewer(){
+  if (!viewerOpen || viewer.dataset.closing) return;
+  viewer.dataset.closing = '1';
+  const a = viewer.animate([
+    { clipPath: 'inset(0px 0px 0px 0px round 0px)', opacity: 1 },
+    { clipPath: rectInset(lastIcon), opacity: 0 }
+  ], { duration: dur(420), easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' });
+  a.onfinish = () => {
+    viewer.hidden = true;
+    a.cancel();
+    vBody.innerHTML = '';          // unload the project page to free memory
+    delete viewer.dataset.closing;
+    viewerOpen = false;
+    grid.querySelectorAll('.item.selected').forEach(n => n.classList.remove('selected'));
+    const btn = lastIcon && lastIcon.closest('.item');
+    if (btn) btn.focus({ preventScroll: true });
+  };
+}
+$('#vBack').addEventListener('click', closeViewer);
+$('#vClose').addEventListener('click', closeViewer);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && viewerOpen) { e.preventDefault(); closeViewer(); return; }
+  if (!finderOpen || viewerOpen) return;
+  if ((e.metaKey || e.ctrlKey) && e.key === '[') { e.preventDefault(); goBack(); }
+  if ((e.metaKey || e.ctrlKey) && e.key === ']') { e.preventDefault(); goFwd(); }
+  if (e.key === 'Backspace' && !e.target.closest('input,textarea')) { e.preventDefault(); goBack(); }
+});
+
+/* ---------- Dock (hover magnification only) ---------- */
+const now = new Date();
+const DOCK = [
+  { label: 'Files', id: 'files', svg: `<rect width="64" height="64" rx="14" fill="url(#dFiles)"/><path d="M14 22a4 4 0 0 1 4-4h9l4 4h15a4 4 0 0 1 4 4v16a4 4 0 0 1-4 4H18a4 4 0 0 1-4-4z" fill="#fff" opacity=".95"/><path d="M14 28h36" stroke="#1673ea" stroke-width="2" opacity=".35"/>` },
+  { label: 'Browser', svg: `<rect width="64" height="64" rx="14" fill="#fff"/><circle cx="32" cy="32" r="18" fill="none" stroke="#2a7de1" stroke-width="3"/><ellipse cx="32" cy="32" rx="8" ry="18" fill="none" stroke="#2a7de1" stroke-width="2.5"/><path d="M14 32h36M17 23h30M17 41h30" stroke="#2a7de1" stroke-width="2.5"/>` },
+  { label: 'Messages', svg: `<rect width="64" height="64" rx="14" fill="url(#dChat)"/><path d="M32 15c-10.5 0-19 6.9-19 15.5 0 5 2.9 9.4 7.4 12.2L19 50l8.3-4.4c1.5.3 3.1.4 4.7.4 10.5 0 19-6.9 19-15.5S42.5 15 32 15z" fill="#fff"/><circle cx="24" cy="30.5" r="2.4" fill="#5a44e2"/><circle cx="32" cy="30.5" r="2.4" fill="#5a44e2"/><circle cx="40" cy="30.5" r="2.4" fill="#5a44e2"/>` },
+  { label: 'Calendar', svg: `<rect width="64" height="64" rx="14" fill="#fff"/><text x="32" y="22" text-anchor="middle" font-family="-apple-system,Inter,Arial,sans-serif" font-size="10" font-weight="700" fill="#ff3b30">${now.toLocaleDateString('en-US',{weekday:'short'}).toUpperCase()}</text><text x="32" y="50" text-anchor="middle" font-family="-apple-system,Inter,Arial,sans-serif" font-size="28" font-weight="300" fill="#1d1d1f">${now.getDate()}</text>` },
+  { label: 'Gallery', svg: `<rect width="64" height="64" rx="14" fill="url(#dGallery)"/><rect x="14" y="17" width="36" height="30" rx="5" fill="#fff" opacity=".95"/><circle cx="24" cy="26" r="3.5" fill="#ffb347"/><path d="M17 44l10-11 7 7 5-5 8 9z" fill="#ff7a59"/>` },
+  { label: 'Music', cls: 'hide-sm', svg: `<rect width="64" height="64" rx="14" fill="url(#dDark)"/><path d="M27 41V21l18-4v20" fill="none" stroke="url(#dMusicNote)" stroke-width="3.4" stroke-linejoin="round"/><circle cx="23" cy="42" r="5" fill="url(#dMusicNote)"/><circle cx="41" cy="38" r="5" fill="url(#dMusicNote)"/>` },
+  { label: 'Code', svg: `<rect width="64" height="64" rx="14" fill="url(#dDark)"/><path d="M25 22 15 32l10 10M39 22l10 10-10 10M35 18l-6 28" fill="none" stroke="#59c2ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>` },
+  { label: 'Terminal', cls: 'hide-sm', svg: `<rect width="64" height="64" rx="14" fill="#111114"/><rect x="1" y="1" width="62" height="62" rx="13" fill="none" stroke="#3a3a42"/><path d="M16 24l8 7-8 7" fill="none" stroke="#e8e8ea" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M28 40h14" stroke="#e8e8ea" stroke-width="3.2" stroke-linecap="round"/>` },
+  { label: 'Settings', svg: `<rect width="64" height="64" rx="14" fill="url(#dSettings)"/><g transform="translate(32 32)" fill="#5b5b63"><circle r="13"/><g >${Array.from({length:8},(_,i)=>`<rect x="-3.2" y="-19" width="6.4" height="8" rx="1.6" transform="rotate(${i*45})"/>`).join('')}</g></g><circle cx="32" cy="32" r="6" fill="#c4c4ca"/>` },
+  { sep: true },
+  { label: 'Downloads', cls: 'hide-sm', svg: `<rect width="64" height="64" rx="14" fill="url(#dDownloads)"/><path d="M32 16v24M22 31l10 10 10-10" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 46h28" stroke="#fff" stroke-width="4" stroke-linecap="round"/>` },
+  { label: 'Trash', svg: `<rect x="12" y="10" width="40" height="5" rx="2.5" fill="#d6d6dc"/><path d="M15 18h34l-3 36a4 4 0 0 1-4 3.6H22a4 4 0 0 1-4-3.6z" fill="url(#dTrash)" stroke="#b8b8c0"/><path d="M25 24v26M32 24v26M39 24v26" stroke="#b0b0b8" stroke-width="2" stroke-linecap="round"/>` }
+];
+const dock = $('#dock');
+DOCK.forEach(d => {
+  if (d.sep) { const s = document.createElement('div'); s.className = 'dock-sep'; dock.appendChild(s); return; }
+  const el = document.createElement('div');
+  el.className = 'dock-item' + (d.cls ? ' ' + d.cls : '');
+  if (d.id) el.id = 'dock-' + d.id;
+  el.innerHTML = `<svg viewBox="0 0 64 64">${d.svg}</svg><span class="tip">${d.label}</span><span class="dot"></span>`;
+  dock.appendChild(el);
+});
+const dockItems = [...dock.querySelectorAll('.dock-item')];
+const MAG = 1.5, RANGE = 150;
+let raf = 0, mx = null;
+function magnify(){
+  raf = 0;
+  dockItems.forEach(it => {
+    if (mx === null) { it.style.setProperty('--s', 1); return; }
+    const r = it.getBoundingClientRect();
+    const d = Math.abs(mx - (r.left + r.width / 2));
+    const t = Math.min(d / RANGE, 1);
+    it.style.setProperty('--s', (1 + (MAG - 1) * Math.cos(t * Math.PI / 2)).toFixed(3));
+  });
+}
+if (!reduce && matchMedia('(hover:hover)').matches) {
+  dock.addEventListener('mousemove', e => { mx = e.clientX; dock.classList.add('tracking'); if (!raf) raf = requestAnimationFrame(magnify); });
+  dock.addEventListener('mouseleave', () => { mx = null; dock.classList.remove('tracking'); if (!raf) raf = requestAnimationFrame(magnify); });
+}
+// The dock is decorative: swallow presses so nothing reacts to clicks.
+['mousedown','click','dblclick','contextmenu','dragstart'].forEach(t => dock.addEventListener(t, e => e.preventDefault()));
+
+const filesDock = $('#dock-files');
+function setRunning(on){ filesDock.classList.toggle('running', on); }
+function bounceFiles(){
+  if (reduce) return;
+  filesDock.querySelector('svg').animate([
+    { transform: 'translateY(0)' }, { transform: 'translateY(-16px)', offset: .3 },
+    { transform: 'translateY(0)', offset: .6 }, { transform: 'translateY(-6px)', offset: .8 }, { transform: 'translateY(0)' }
+  ], { duration: 700, easing: 'ease-out' });
+}
+
+/* ---------- Menu bar clock ---------- */
+function tick(){
+  const d = new Date();
+  const day = d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).replace(',', '');
+  const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  $('#clock').textContent = `${day}  ${time}`;
+}
+tick(); setInterval(tick, 15000);
+
+/* ---------- Boot ---------- */
+setTimeout(openFinder, dur(450));
+</script>
+<script>
+/* ---------- Frame-scroll bridge (added for the laptop integration) ----------
+   Tells the page around this one (the scroll animation) about wheel and
+   arrow / page-key input, and whether this window is on its landing page
+   (Projects, with no project open). Changes nothing on screen. */
+(function () {
+  if (window.parent === window) return;
+  // Scrolling inside this page must never spill over into the page around it.
+  document.documentElement.style.overscrollBehavior = 'none';
+  document.body && (document.body.style.overscrollBehavior = 'none');
+  function landing() {
+    try {
+      var atRoot = (typeof here === 'function') ? here() === 'root' : true;
+      var open = (typeof viewerOpen !== 'undefined') && viewerOpen;
+      return atRoot && !open;
+    } catch (e) { return false; }
+  }
+  addEventListener('wheel', function (e) {
+    var dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? innerHeight : 1);
+    parent.postMessage({ frameScroll: 'wheel', dy: dy, landing: landing() }, '*');
+  }, { passive: true, capture: true });
+  addEventListener('keydown', function (e) {
+    var dir = { ArrowDown: 1, PageDown: 1, ArrowUp: -1, PageUp: -1 }[e.key];
+    if (!dir || (e.target.closest && e.target.closest('input,textarea'))) return;
+    parent.postMessage({ frameScroll: 'key', dir: dir, landing: landing() }, '*');
+  }, true);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FX3 Portfolio</title>
+<!--
+  sony-fx3-interface.html — Sony FX3-style camera screen: Photography, Videography, Instagram.
+  Self-contained: no frameworks or external files. Media loads from the folders next to this file:
+
+    camera/
+      sony-fx3-interface.html     ← this file
+      update-camera-media.mjs     ← re-scans the folders and rewrites the media list below
+      photos/                     → Photography gallery
+      video/                      → Videography gallery
+
+  All media paths are relative, so keep this file and the two folders together.
+  EMBED (once the camera folder is inside the site's public/ folder)
+    <iframe src="/camera/sony-fx3-interface.html" title="Camera portfolio"
+            style="width:100%;aspect-ratio:3/2;border:0;display:block"></iframe>
+
+  KEYBOARD (when the screen has focus)
+    Arrows move · Enter opens · Esc goes back · Space plays/pauses video
+-->
+<style>
+:root{
+  --ratio:1.5;               /* FX3 rear LCD is a 3:2 panel */
+  --orange:#cf4520;
+  --line:#8c8c8c;
+  --font:"Helvetica Neue",Helvetica,Arial,"Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+html,body{width:100%;height:100%;overflow:hidden;background:#000}
+body{display:grid;place-items:center;font-family:var(--font);color:#fff;-webkit-font-smoothing:antialiased;
+  user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;line-height:1}
+button:focus{outline:none}
+button:focus-visible,a:focus-visible{outline:.35cqh solid var(--orange);outline-offset:.2cqh}
+a{color:inherit;text-decoration:none}
+
+/* Screen box. 1cqh = 1% of the screen's height, so everything scales with the container. */
+.lcd{position:relative;width:min(100vw,calc(100vh * var(--ratio)));height:min(100vh,calc(100vw / var(--ratio)));
+  container-type:size;overflow:hidden;background:#000;outline:none;font-weight:500;font-variant-numeric:tabular-nums}
+.ico{width:1em;height:1em;display:inline-block;flex:none;vertical-align:middle}
+.screen{position:absolute;inset:0;opacity:0;visibility:hidden;transition:opacity .2s ease,visibility .2s}
+.lcd[data-screen="home"] #home,.lcd[data-screen="gallery"] #gallery,.lcd[data-screen="viewer"] #viewer{opacity:1;visibility:visible}
+
+/* Shared chrome: rules, key caps, disabled controls */
+.rule{position:absolute;left:4cqh;right:4cqh;height:.28cqh;background:var(--line)}
+.kc{display:inline-grid;place-items:center;height:3.6cqh;padding:0 .8cqh;border:.22cqh solid #fff;border-radius:.5cqh;font-size:1.9cqh;letter-spacing:.06em;font-weight:600}
+.keycap{position:absolute;right:4cqh;bottom:3.4cqh;display:inline-flex;align-items:center;gap:.9cqh;height:6cqh;padding:0 1.2cqh;
+  border:.25cqh solid #fff;border-radius:.8cqh}
+.keycap .ico{font-size:3.4cqh}
+.keycap:hover{background:rgba(255,255,255,.1)}
+.off{position:relative;pointer-events:none;cursor:default}
+.off>.ico{opacity:.28}
+.off::after{content:"";position:absolute;right:16%;top:16%;width:2.6cqh;height:2.6cqh;opacity:.75;
+  background:linear-gradient(45deg,transparent 44%,#9a9a9a 44% 56%,transparent 56%),
+             linear-gradient(-45deg,transparent 44%,#9a9a9a 44% 56%,transparent 56%)}
+.keycap.off{position:absolute;border-color:#555;color:#666}
+.keycap.off>.ico,.keycap.off .kc{opacity:.5}
+.keycap.off::after{display:none}
+.scroll{position:absolute;right:5cqh;width:.8cqh;background:#3a3a3a}
+.scroll i{position:absolute;left:0;right:0;background:#cfcfcf;min-height:4cqh}
+
+/* ---------- HOME: Sony menu layout (top icon tabs, left category column, orange selection) ---------- */
+.m-tabs{position:absolute;left:5cqh;top:6cqh;display:flex}
+.m-tab{width:17cqh;height:10.5cqh;display:grid;place-items:center;font-size:6cqh;color:#e9e9e9}
+.m-tab.on{border:.38cqh solid var(--orange);border-bottom:0;background:#000;height:10.9cqh;position:relative;z-index:1}
+#home .rule.top{top:16.5cqh}
+.m-cats{position:absolute;left:4cqh;top:19cqh;width:22cqh;display:flex;flex-direction:column;gap:.5cqh}
+.m-cat{height:14.2cqh;display:grid;place-items:center;background:#2a2a2a;font-size:7cqh;color:#f0f0f0}
+.m-cat.on{background:var(--orange)}
+.m-list{position:absolute;left:28cqh;right:10cqh;top:19cqh;display:flex;flex-direction:column}
+.m-row{height:10.4cqh;display:flex;align-items:center;text-align:left;font-size:5.3cqh;padding-right:2.4cqh}
+.m-row .dot{width:3.4cqh;text-align:center;font-size:4cqh}
+.m-row .lbl{flex:1}
+.m-row .ico{font-size:4.4cqh;margin-right:2cqh;opacity:.9}
+.m-row .val{font-size:3.4cqh;color:#bdbdbd}
+.m-row.on{background:var(--orange)}
+.m-row.on .val{color:#fff}
+#home .scroll{top:19cqh;height:62.4cqh}
+#home .rule.bot{top:85cqh}
+.m-row .ext{display:inline-flex;margin-left:1.4cqh;opacity:.8}
+.m-row .ext .ico{font-size:2.8cqh;margin:0}
+
+/* ---------- GALLERY: 2×2 index view, scrolls by row ---------- */
+.bar{position:absolute;left:4cqh;right:4cqh;top:3cqh;height:7cqh;display:flex;align-items:center;justify-content:space-between;font-size:3.4cqh;letter-spacing:.04em}
+.bar .ttl{display:inline-flex;align-items:center;gap:1.4cqh;font-weight:600}
+.bar .ttl .ico{font-size:4.4cqh}
+.bar .cnt{color:#d6d6d6}
+#gallery .rule.top{top:11.2cqh}
+.g-grid{position:absolute;left:4cqh;right:9cqh;top:13cqh;height:71cqh;overflow-y:auto;overscroll-behavior:contain;
+  display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:34.5cqh;gap:2cqh;scroll-snap-type:y mandatory;scrollbar-width:none}
+.g-grid::-webkit-scrollbar{display:none}
+.tile{position:relative;overflow:hidden;background:#0b0b0b;scroll-snap-align:start}
+.tile::after{content:"";position:absolute;inset:0;border:.42cqh solid transparent;z-index:2;pointer-events:none;transition:border-color .12s}
+.tile img,.tile video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;transition:transform .3s ease}
+.tile.on::after{border-color:var(--orange)}
+.tile.on img,.tile.on video{transform:scale(1.03)}
+.tile .badge{position:absolute;left:1.2cqh;bottom:1.1cqh;display:inline-flex;align-items:center;gap:.7cqh;padding:.5cqh .9cqh;
+  background:rgba(0,0,0,.62);border-radius:.4cqh;font-size:2.3cqh;font-weight:600}
+.tile .badge .ico{font-size:2.8cqh}
+.tile .broken{position:absolute;inset:0;display:grid;place-items:center;font-size:2.6cqh;color:#9a9a9a}
+#gallery .scroll{top:13cqh;height:71cqh}
+#gallery .scroll i{transition:top .12s linear}
+#gallery .rule.bot{top:86cqh}
+.g-name{position:absolute;left:4.6cqh;bottom:4.6cqh;font-size:2.9cqh;color:#bdbdbd;max-width:90cqh;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);padding:2.2cqh 4.5cqh;background:#1c1c1c;
+  border:.25cqh solid #555;border-radius:.5cqh;font-size:3.4cqh;color:#e8e8e8;white-space:nowrap}
+
+/* ---------- VIEWER: one item, full screen ---------- */
+#viewer{background:#000}
+.v-stage{position:absolute;inset:0}
+.v-stage img,.v-stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity .25s ease}
+.v-stage .entering{opacity:0}
+.v-hud{position:absolute;inset:0;pointer-events:none;transition:opacity .25s ease}
+.v-hud>*{pointer-events:auto}
+.lcd[data-hud="0"] .v-hud{opacity:0}
+.lcd[data-hud="0"] .v-hud>*{pointer-events:none}
+.v-top,.v-bot{position:absolute;left:0;right:0;display:flex;align-items:center;gap:2cqh;padding:0 4cqh;text-shadow:0 0 .4cqh #000}
+.v-top{top:0;height:13cqh;justify-content:space-between;font-size:3.4cqh;letter-spacing:.04em;
+  background:linear-gradient(rgba(0,0,0,.6),rgba(0,0,0,0))}
+.v-top .ttl{display:inline-flex;align-items:center;gap:1.4cqh;font-weight:600}
+.v-top .ttl .ico{font-size:4.4cqh}
+.v-bot{bottom:0;height:15cqh;padding-right:24cqh;font-size:2.8cqh;background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.65))}
+.v-bot .fname{max-width:46cqh;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seek{flex:1;height:5cqh;display:flex;align-items:center;cursor:pointer}
+.seek b{position:relative;display:block;width:100%;height:.8cqh;background:rgba(255,255,255,.3);border-radius:.4cqh}
+.seek i{position:absolute;left:0;top:0;bottom:0;width:0;background:#fff;border-radius:.4cqh}
+.vtime{white-space:nowrap}
+.vbtn{width:5.4cqh;height:5.4cqh;display:grid;place-items:center;font-size:3.6cqh}
+.v-nav{position:absolute;top:50%;transform:translateY(-50%);width:8cqh;height:14cqh;display:grid;place-items:center;font-size:5.4cqh;
+  opacity:.75;filter:drop-shadow(0 0 .4cqh #000)}
+.v-nav:hover{opacity:1}
+.v-nav.l{left:1cqh}.v-nav.r{right:1cqh}
+.v-big{position:absolute;left:50%;top:50%;width:13cqh;height:13cqh;transform:translate(-50%,-50%);border-radius:50%;
+  background:rgba(0,0,0,.45);border:.35cqh solid rgba(255,255,255,.8);display:grid;place-items:center;font-size:5.4cqh;transition:opacity .2s}
+.lcd[data-playing="1"] .v-big{opacity:0;pointer-events:none}
+#viewer .keycap{bottom:4.5cqh}
+#viewer .empty{top:50%}
+
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<div class="lcd" id="lcd" tabindex="0" role="application" aria-label="Camera portfolio"
+     data-screen="home" data-hud="1" data-playing="0">
+
+  <!-- HOME: section menu -->
+  <section class="screen" id="home" aria-label="Portfolio sections"></section>
+
+  <!-- GALLERY: 2×2 index of the chosen section -->
+  <section class="screen" id="gallery" aria-label="Gallery"></section>
+
+  <!-- VIEWER: one photo or video, full screen inside the display -->
+  <section class="screen" id="viewer" aria-label="Viewer"></section>
+
+  <!-- Section markers. Galleries are built from the two lists in the script below. -->
+  <!-- PHOTOGRAPHY MEDIA -->
+  <div id="photography-media" hidden></div>
+  <!-- VIDEOGRAPHY MEDIA -->
+  <div id="videography-media" hidden></div>
+</div>
+
+<script>
+/* ==========================================================================
+   YOUR CONTENT
+   --------------------------------------------------------------------------
+   • The two lists between the <camera-media> markers are generated from the
+     photos/ and video/ folders. After adding or removing files, run (from the camera folder):
+         node update-camera-media.mjs
+     It keeps your existing order and any titles you added, appends new files, drops deleted ones.
+   • Paths are relative to THIS html file, so plain file names with spaces are fine.
+   • Each entry is a path string, or an object with optional extras:
+       { src: 'path/photo.jpg', alt: 'What the photo shows', title: 'Shown in the viewer' }
+       { src: 'path/clip.mp4',  poster: 'path/clip-thumb.jpg', title: 'Short film' }
+   • Type comes from the extension (.mp4 .webm .m4v .mov .ogv = video, anything else = image),
+     or set { type: 'video' } / { type: 'image' }.
+   • Give videos a poster image: thumbnails then load instantly instead of fetching video data.
+   • Use web exports (H.264 MP4, WebP/JPEG), not camera originals.
+   ========================================================================== */
+
+// <camera-media>
+// PHOTOGRAPHY MEDIA — camera/photos
+const photographyMedia = [
+    'photos/SaveVid.Net_625258052_17923626684231868_313472440058882886_n.jpg',
+    'photos/SaveVid.Net_625449197_17923626720231868_9085159601143644479_n.jpg',
+    'photos/SaveVid.Net_625970553_17923626702231868_3699082631112119949_n.jpg',
+    'photos/SaveVid.Net_627002920_17923626738231868_3889022696531305817_n.jpg',
+    'photos/WhatsApp Image 2026-08-24 at 7.36.41 PM (1).jpeg',
+    'photos/WhatsApp Image 2026-08-24 at 7.36.41 PM.jpeg',
+    'photos/WhatsApp Image 2026-08-24 at 7.36.42 PM (1).jpeg',
+    'photos/WhatsApp Image 2026-08-24 at 7.36.42 PM.jpeg',
+    'photos/WhatsApp Image 2026-09-18 at 6.00.08 PM.jpeg',
+];
+
+// VIDEOGRAPHY MEDIA — camera/video
+const videographyMedia = [
+    'video/AQMPKa1AgTKHLYUUjRasU1JA0uEvuGJR2zmyEd7orCPI-k4JzbCTC7B2_dFTPSTQ1qIBsk5BvgRhhmHnmlQP0rJUi6jbNW26GQiKc6s.mp4',
+];
+// </camera-media>
+
+// INSTAGRAM — replace with your profile URL if it changes
+const INSTAGRAM_URL = 'https://www.instagram.com/sachframes/';
+
+// Mouse-wheel events over the screen are passed to the parent page as
+// { source: 'fx3-lcd', event: 'wheel', deltaX, deltaY, deltaMode } so a scroll-driven tour keeps working.
+// Replace '*' with your site origin, e.g. 'https://your-site.vercel.app'.
+const PARENT_ORIGIN = '*';
+</script>
+
+<script>
+(() => {
+'use strict';
+/* ---------------- Data ---------------- */
+const VIDEO_EXT = /\.(mp4|m4v|webm|mov|ogv)(?:[?#]|$)/i;
+// Encode each path segment so names with spaces, '#', '%' etc. load correctly; full URLs pass through.
+const encodePath = p => /^([a-z][a-z0-9+.-]*:|\/\/)/i.test(p) ? p
+  : p.split('/').map(seg => { try { return encodeURIComponent(decodeURIComponent(seg)); } catch (e) { return encodeURIComponent(seg); } }).join('/');
+// Display names follow Sony numbering (stills 100-0001, movies C0001) unless an entry has a title.
+const normalize = (list, isMovie) => (Array.isArray(list) ? list : []).map(item => {
+  const o = typeof item === 'string' ? { src: item } : { ...item };
+  if (!o.src) return null;
+  o.type = o.type || (VIDEO_EXT.test(o.src) ? 'video' : 'image');
+  o.src = encodePath(o.src);
+  if (o.poster) o.poster = encodePath(o.poster);
+  return o;
+}).filter(Boolean).map((o, i) => {
+  const n = String(i + 1).padStart(4, '0');
+  o.name = o.title || (o.type === 'video' || isMovie ? 'C' + n : '100-' + n);
+  return o;
+});
+
+const SECTIONS = [
+  { id: 'photography', label: 'Photography', short: 'PHOTO', icon: 'cam',   empty: 'No images.', items: normalize(photographyMedia, false) },
+  { id: 'videography', label: 'Videography', short: 'MOVIE', icon: 'movie', empty: 'No movies.', items: normalize(videographyMedia, true) },
+];
+
+/* ---------------- Icons ---------------- */
+const svg = inner => `<svg class="ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${inner}</svg>`;
+const S = 'fill="none" stroke="currentColor" stroke-width="2"';
+const I = {
+  cam: svg(`<path fill-rule="evenodd" d="M2.8 7.2h4.3L9 4.6h6l1.9 2.6h4.3V19.2H2.8zM12 8.9a4.1 4.1 0 1 0 0 8.2a4.1 4.1 0 1 0 0-8.2z"/><circle cx="12" cy="13" r="2.4"/>`),
+  movie: svg(`<rect x="1.8" y="6.8" width="13.6" height="10.6" rx="1.2"/><path d="M16.4 11l5.8-3.3v9.8l-5.8-3.3z"/>`),
+  playbox: svg(`<rect x="2.5" y="4" width="19" height="16" rx="1.6" ${S}/><path d="M9.6 8.3v7.4l6.1-3.7z"/>`),
+  mon: svg(`<rect x="3" y="3.5" width="18" height="12.5" rx="1" ${S}/><path d="M12 6.6v6.4M8.8 9.8h6.4M12 16v3.6M8 20.2h8" ${S}/>`),
+  exp: svg(`<circle cx="12" cy="12" r="9" ${S}/><path d="M12 3l2.6 6.4M21 12l-6.4 2.6M12 21l-2.6-6.4M3 12l6.4-2.6" ${S}/>`),
+  af: svg(`<path d="M3 8.5V3h5.5M15.5 3H21v5.5M21 15.5V21h-5.5M8.5 21H3v-5.5" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="12" r="2.2"/>`),
+  gear: (() => { let t = ''; for (let i = 0; i < 8; i++) t += `<rect x="10.3" y="1.7" width="3.4" height="4.6" rx=".6" transform="rotate(${i * 45} 12 12)"/>`;
+    return svg(t + `<circle cx="12" cy="12" r="5.7" fill="none" stroke="currentColor" stroke-width="3.6"/>`); })(),
+  back: svg(`<path d="M8.8 4.8L4.4 9.2l4.4 4.4" fill="none" stroke="currentColor" stroke-width="2.3"/><path d="M5 9.2h9.6a5 5 0 0 1 0 10H9" fill="none" stroke="currentColor" stroke-width="2.3"/>`),
+  left: svg(`<path d="M15 3.5L6.5 12l8.5 8.5" fill="none" stroke="currentColor" stroke-width="2.4"/>`),
+  right: svg(`<path d="M9 3.5l8.5 8.5L9 20.5" fill="none" stroke="currentColor" stroke-width="2.4"/>`),
+  play: svg(`<path d="M7 4.5v15l12.5-7.5z"/>`),
+  pause: svg(`<path d="M6.5 4.5h4v15h-4zM13.5 4.5h4v15h-4z"/>`),
+  vol: svg(`<path d="M3 9h4l5-4.5v15L7 15H3z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.2 5.8a9 9 0 0 1 0 12.4" ${S}/>`),
+  mute: svg(`<path d="M3 9h4l5-4.5v15L7 15H3z"/><path d="M15.5 9l5.5 6M21 9l-5.5 6" ${S}/>`),
+  ext: svg(`<path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6" ${S}/>`),
+  insta: svg(`<rect x="3" y="3" width="18" height="18" rx="5.2" ${S}/><circle cx="12" cy="12" r="4.2" ${S}/><circle cx="17.3" cy="6.7" r="1.25"/>`),
+};
+
+/* ---------------- Helpers ---------------- */
+const $ = id => document.getElementById(id);
+const lcd = $('lcd'), home = $('home'), gallery = $('gallery'), viewer = $('viewer');
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const pad = n => String(n).padStart(2, '0');
+const hms = s => { s = Math.max(0, Math.floor(s || 0)); return `${Math.floor(s / 3600)}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`; };
+const ms = s => { s = Math.max(0, Math.floor(s || 0)); return `${Math.floor(s / 60)}:${pad(s % 60)}`; };
+const frameSrc = src => src.includes('#') ? src : src + '#t=0.1';   // shows a real frame instead of black
+const handle = (() => { try { const p = new URL(INSTAGRAM_URL).pathname.split('/').filter(Boolean)[0]; return p ? '@' + p : 'Instagram'; } catch (e) { return 'Instagram'; } })();
+const safeIG = /^https:\/\//.test(INSTAGRAM_URL) ? INSTAGRAM_URL : '';
+const ROWS = SECTIONS.length + (safeIG ? 1 : 0);   // Photography, Videography, Instagram
+const IG_ROW = SECTIONS.length;
+
+const state = { screen: 'home', row: 0, sec: 0, tile: 0, item: 0, muted: true };
+const section = () => SECTIONS[state.sec];
+
+function show(screen) {
+  state.screen = screen;
+  lcd.dataset.screen = screen;
+  if (screen !== 'viewer') { viewer.querySelectorAll('video').forEach(v => v.pause()); lcd.dataset.playing = '0'; }
+  lcd.focus({ preventScroll: true });
+}
+
+/* ---------------- HOME ---------------- */
+// Only the first tab, the first category and the three rows are live.
+// Every other camera control is drawn disabled (dimmed with a small X) and has no action.
+function renderHome() {
+  const offTabs = ['exp', 'af', 'playbox', 'mon', 'gear'];
+  const offCats = ['playbox', 'mon', 'gear'];
+  home.innerHTML = `
+    <div class="m-tabs">
+      <span class="m-tab on" aria-hidden="true">${I.cam}</span>
+      ${offTabs.map(k => `<span class="m-tab off" aria-hidden="true">${I[k]}</span>`).join('')}
+    </div>
+    <div class="rule top"></div>
+    <div class="m-cats">
+      <span class="m-cat on" aria-hidden="true">${I.cam}</span>
+      ${offCats.map(k => `<span class="m-cat off" aria-hidden="true">${I[k]}</span>`).join('')}
+    </div>
+    <div class="m-list" role="menu">
+      ${SECTIONS.map((s, i) => `<button class="m-row ${i === state.row ? 'on' : ''}" role="menuitem" data-row="${i}">
+        <span class="dot">${i === state.row ? '•' : ''}</span>${I[s.icon]}<span class="lbl">${s.label}</span>
+        <span class="val">${s.items.length}</span></button>`).join('')}
+      ${safeIG ? `<a class="m-row ${state.row === IG_ROW ? 'on' : ''}" role="menuitem" data-row="${IG_ROW}" href="${esc(safeIG)}"
+        target="_blank" rel="noopener noreferrer" aria-label="Instagram ${esc(handle)} (opens in a new tab)">
+        <span class="dot">${state.row === IG_ROW ? '•' : ''}</span>${I.insta}<span class="lbl">Instagram</span>
+        <span class="val">${esc(handle)}</span><span class="ext">${I.ext}</span></a>` : ''}
+    </div>
+    <div class="scroll"><i style="top:0;height:100%"></i></div>
+    <div class="rule bot"></div>
+    <span class="keycap off" aria-hidden="true"><span class="kc">MENU</span>${I.back}</span>`;
+}
+function setRow(i) {
+  state.row = (i + ROWS) % ROWS;
+  home.querySelectorAll('.m-row').forEach((r, j) => {
+    r.classList.toggle('on', j === state.row);
+    r.querySelector('.dot').textContent = j === state.row ? '•' : '';
+  });
+}
+
+/* ---------------- GALLERY ---------------- */
+let thumbObserver = null;
+function openGallery(i, keepTile) {
+  state.sec = i;
+  if (!keepTile) state.tile = 0;
+  const s = section(), n = s.items.length;
+  gallery.innerHTML = `
+    <div class="bar"><span class="ttl">${I.playbox}${s.label.toUpperCase()}</span><span class="cnt" id="gCount">${n ? `${state.tile + 1}/${n}` : '0/0'}</span></div>
+    <div class="rule top"></div>
+    ${n ? `<div class="g-grid" id="gGrid" role="listbox" aria-label="${s.label}">${s.items.map((it, j) => tileHTML(it, j)).join('')}</div>
+           <div class="scroll" id="gScroll"><i></i></div>`
+        : `<div class="empty">${s.empty}</div>`}
+    <div class="rule bot"></div>
+    <div class="g-name" id="gName">${n ? esc(s.items[state.tile].name) : ''}</div>
+    <button class="keycap" data-act="back" aria-label="Back to sections"><span class="kc">MENU</span>${I.back}</button>`;
+  show('gallery');
+  if (!n) return;
+  const grid = $('gGrid');
+  grid.addEventListener('scroll', syncScrollbar, { passive: true });
+  wireThumbs(grid);
+  selectTile(state.tile, true);
+  syncScrollbar();
+}
+function tileHTML(it, j) {
+  const alt = esc(it.alt || it.name);
+  const thumb = it.type === 'video'
+    ? (it.poster ? `<img src="${esc(it.poster)}" alt="" loading="lazy" decoding="async">`
+                 : `<video muted playsinline preload="none" data-src="${esc(frameSrc(it.src))}"></video>`)
+    : `<img src="${esc(it.src)}" alt="${alt}" loading="lazy" decoding="async">`;
+  const badge = it.type === 'video' ? `<span class="badge">${I.movie}<span class="dur">${esc(it.duration || '')}</span></span>` : '';
+  return `<button class="tile" role="option" data-tile="${j}" aria-label="${alt}">${thumb}${badge}</button>`;
+}
+function wireThumbs(grid) {
+  grid.querySelectorAll('.tile').forEach(t => {
+    const media = t.querySelector('img,video');
+    media.addEventListener('error', () => { media.remove(); t.insertAdjacentHTML('afterbegin', '<span class="broken">Unable to display.</span>'); }, { once: true });
+    if (media.tagName === 'VIDEO') media.addEventListener('loadedmetadata', () => {
+      const d = t.querySelector('.dur'); if (d && !d.textContent && isFinite(media.duration)) d.textContent = ms(media.duration);
+    }, { once: true });
+  });
+  // Only fetch video thumbnails as they scroll into view
+  thumbObserver?.disconnect();
+  thumbObserver = new IntersectionObserver(entries => entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    const v = e.target;
+    v.preload = 'metadata'; v.src = v.dataset.src; thumbObserver.unobserve(v);
+  }), { root: grid, rootMargin: '40% 0px' });
+  grid.querySelectorAll('video[data-src]').forEach(v => thumbObserver.observe(v));
+}
+function selectTile(i, instant) {
+  const s = section(), n = s.items.length;
+  if (!n) return;
+  state.tile = clamp(i, 0, n - 1);
+  gallery.querySelectorAll('.tile').forEach((t, j) => { t.classList.toggle('on', j === state.tile); t.setAttribute('aria-selected', j === state.tile); });
+  $('gCount').textContent = `${state.tile + 1}/${n}`;
+  $('gName').textContent = s.items[state.tile].name;
+  gallery.querySelector(`.tile[data-tile="${state.tile}"]`)?.scrollIntoView({ block: 'nearest', behavior: instant ? 'auto' : 'smooth' });
+}
+function syncScrollbar() {
+  const grid = $('gGrid'), bar = gallery.querySelector('#gScroll i');
+  if (!grid || !bar) return;
+  const h = grid.clientHeight / grid.scrollHeight;
+  bar.style.height = `${Math.min(1, h) * 100}%`;
+  bar.style.top = `${grid.scrollHeight > grid.clientHeight ? grid.scrollTop / (grid.scrollHeight - grid.clientHeight) * (1 - h) * 100 : 0}%`;
+}
+
+/* ---------------- VIEWER ---------------- */
+function openViewer(i) {
+  const s = section(), n = s.items.length;
+  if (!n) return;
+  state.item = (i + n) % n;
+  state.tile = state.item;
+  const it = s.items[state.item], vid = it.type === 'video';
+  viewer.querySelectorAll('video').forEach(v => { v.pause(); v.removeAttribute('src'); v.load(); });
+  viewer.innerHTML = `
+    <div class="v-stage" id="vStage"></div>
+    <div class="v-hud">
+      <div class="v-top"><span class="ttl">${I.playbox}${s.short}</span><span>${state.item + 1}/${n}</span></div>
+      ${n > 1 ? `<button class="v-nav l" data-act="prev" aria-label="Previous">${I.left}</button><button class="v-nav r" data-act="next" aria-label="Next">${I.right}</button>` : ''}
+      ${vid ? `<button class="v-big" data-act="toggle" aria-label="Play">${I.play}</button>` : ''}
+      <div class="v-bot"><span class="fname">${esc(it.name)}</span>
+        ${vid ? `<div class="seek" id="vSeek"><b><i id="vBar"></i></b></div><span class="vtime" id="vTime">0:00:00</span>
+                 <button class="vbtn" data-act="toggle" id="vPP" aria-label="Play or pause">${I.play}</button>
+                 <button class="vbtn" data-act="mute" id="vMute" aria-label="${state.muted ? 'Unmute' : 'Mute'}">${state.muted ? I.mute : I.vol}</button>` : ''}
+      </div>
+      <button class="keycap" data-act="back" aria-label="Back to gallery"><span class="kc">MENU</span>${I.back}</button>
+    </div>`;
+  const stage = $('vStage');
+  let el;
+  if (vid) {
+    el = document.createElement('video');
+    el.muted = state.muted; el.playsInline = true; el.setAttribute('playsinline', '');
+    el.preload = 'auto'; el.disablePictureInPicture = true;
+    if (it.poster) el.poster = it.poster;
+    el.src = it.poster ? it.src : frameSrc(it.src);
+    const sync = () => {
+      const playing = !el.paused && !el.ended;
+      lcd.dataset.playing = playing ? '1' : '0';
+      const pp = $('vPP'); if (pp) pp.innerHTML = playing ? I.pause : I.play;
+    };
+    el.addEventListener('play', sync); el.addEventListener('pause', sync); el.addEventListener('ended', sync);
+    el.addEventListener('timeupdate', () => {
+      const d = isFinite(el.duration) ? el.duration : 0;
+      const bar = $('vBar'), t = $('vTime');
+      if (bar) bar.style.width = d ? `${el.currentTime / d * 100}%` : '0%';
+      if (t) t.textContent = `${hms(el.currentTime)} / ${hms(d)}`;
+    });
+    el.addEventListener('loadedmetadata', () => { const t = $('vTime'); if (t) t.textContent = `0:00:00 / ${hms(el.duration)}`; });
+  } else {
+    el = document.createElement('img');
+    el.alt = it.alt || it.name; el.decoding = 'async'; el.draggable = false; el.src = it.src;
+  }
+  el.className = 'entering';
+  el.addEventListener('error', () => { stage.innerHTML = '<div class="empty">Unable to display.</div>'; viewer.querySelector('.v-big')?.remove(); }, { once: true });
+  stage.appendChild(el);
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.remove('entering')));
+  lcd.dataset.hud = '1';
+  lcd.dataset.playing = '0';
+  show('viewer');
+  if (vid) el.play().catch(() => {});   // starts muted; the speaker button turns sound on
+}
+const activeVideo = () => viewer.querySelector('.v-stage video');
+function togglePlay() {
+  const v = activeVideo(); if (!v) return;
+  if (v.paused || v.ended) { if (v.ended) v.currentTime = 0; v.play().catch(() => {}); } else v.pause();
+}
+function toggleMute() {
+  state.muted = !state.muted;
+  const v = activeVideo(); if (v) v.muted = state.muted;
+  const b = $('vMute'); if (b) { b.innerHTML = state.muted ? I.mute : I.vol; b.setAttribute('aria-label', state.muted ? 'Unmute' : 'Mute'); }
+}
+
+/* ---------------- Navigation ---------------- */
+function back() {
+  if (state.screen === 'viewer') openGallery(state.sec, true);
+  else if (state.screen === 'gallery') { show('home'); setRow(state.sec); }
+}
+function act(name) {
+  if (name === 'back') back();
+  else if (name === 'prev') openViewer(state.item - 1);
+  else if (name === 'next') openViewer(state.item + 1);
+  else if (name === 'toggle') togglePlay();
+  else if (name === 'mute') toggleMute();
+}
+
+let down = null, swiped = false;
+lcd.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY }; swiped = false; });
+lcd.addEventListener('pointerup', e => {
+  if (!down || state.screen !== 'viewer') { down = null; return; }
+  const dx = e.clientX - down.x, dy = e.clientY - down.y; down = null;
+  if (Math.abs(dx) > lcd.clientWidth * .08 && Math.abs(dx) > Math.abs(dy) * 1.5 && section().items.length > 1) {
+    swiped = true; openViewer(state.item + (dx < 0 ? 1 : -1));
+  }
+});
+lcd.addEventListener('click', e => {
+  if (swiped) { swiped = false; return; }
+  const row = e.target.closest('.m-row');
+  if (row) { setRow(+row.dataset.row); if (state.row !== IG_ROW) openGallery(state.row); return; }   // the Instagram row is a real link
+  const tile = e.target.closest('.tile');
+  if (tile) { selectTile(+tile.dataset.tile); openViewer(+tile.dataset.tile); return; }
+  const seek = e.target.closest('.seek');
+  if (seek) {
+    const v = activeVideo(), r = seek.getBoundingClientRect();
+    if (v && isFinite(v.duration)) v.currentTime = clamp((e.clientX - r.left) / r.width, 0, 1) * v.duration;
+    return;
+  }
+  const a = e.target.closest('[data-act]');
+  if (a) { act(a.dataset.act); return; }
+  if (state.screen === 'viewer' && e.target.closest('.v-stage')) {   // tap the picture: show/hide the overlay
+    lcd.dataset.hud = lcd.dataset.hud === '1' ? '0' : '1';
+  }
+});
+let lastMove = '';
+lcd.addEventListener('pointermove', e => {               // hover selects, but only on real mouse movement
+  if (e.pointerType !== 'mouse') return;
+  const at = e.clientX + ',' + e.clientY;
+  if (at === lastMove) return;
+  lastMove = at;
+  const row = e.target.closest('.m-row');
+  if (row && state.screen === 'home') setRow(+row.dataset.row);
+  const tile = e.target.closest('.tile');
+  if (tile && state.screen === 'gallery' && +tile.dataset.tile !== state.tile) selectTile(+tile.dataset.tile, true);
+});
+
+document.addEventListener('keydown', e => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = e.key;
+  if ((k === 'Enter' || k === ' ') && e.target.closest?.('a')) return;   // let the Instagram link work
+  const keys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', ' ', 'Escape', 'Backspace'];
+  if (!keys.includes(k)) return;
+  e.preventDefault();
+  if (k === 'Escape' || k === 'Backspace') return back();
+  if (state.screen === 'home') {
+    if (k === 'ArrowUp') setRow(state.row - 1);
+    else if (k === 'ArrowDown') setRow(state.row + 1);
+    else if (k === 'Enter' || k === ' ' || k === 'ArrowRight') {
+      if (state.row === IG_ROW) window.open(safeIG, '_blank', 'noopener,noreferrer');
+      else openGallery(state.row);
+    }
+  } else if (state.screen === 'gallery') {
+    const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -2, ArrowDown: 2 }[k];
+    if (step) selectTile(state.tile + step);
+    else openViewer(state.tile);
+  } else if (state.screen === 'viewer') {
+    if (k === 'ArrowLeft') openViewer(state.item - 1);
+    else if (k === 'ArrowRight') openViewer(state.item + 1);
+    else togglePlay();
+  }
+});
+
+// Let the parent page's scroll tour receive the wheel, except while the gallery grid is scrolling.
+lcd.addEventListener('wheel', e => {
+  if (state.screen === 'gallery' && $('gGrid')) return;
+  if (window.parent !== window) {
+    try { window.parent.postMessage({ source: 'fx3-lcd', event: 'wheel', deltaX: e.deltaX, deltaY: e.deltaY, deltaMode: e.deltaMode }, PARENT_ORIGIN); } catch (err) {}
+  }
+}, { passive: true });
+document.addEventListener('visibilitychange', () => { if (document.hidden) activeVideo()?.pause(); });
+
+/* ---------------- Boot ---------------- */
+renderHome();
+show('home');
+})();
+</script>
+
+<!-- frame-scroll bridge: added for the scroll animation (js/camera-screen.js).
+     • When this screen is embedded in the animation, its screen box fills
+       the whole frame it is given (the physical camera display, then the
+       full viewport), so there is never a black band beside it. Sizes stay
+       tied to the screen height, so nothing is stretched.
+     • Tells the page around it about wheel / page-key input and whether the
+       camera HTML still has anything of its own to scroll in that direction
+       (only the Photography / Videography grid scrolls). When it has
+       nothing left to scroll, the next scroll leaves the camera screen.
+     Nothing else changes. -->
+<style>
+  html.fs-embedded .lcd { width: 100vw; height: 100vh; }
+</style>
+<script>
+(function () {
+  if (window.parent === window) return;
+  document.documentElement.classList.add('fs-embedded');
+  document.documentElement.style.overscrollBehavior = 'none';
+  var lcd = document.getElementById('lcd');
+  // Can the camera HTML itself still scroll this way?
+  function ownsScroll(dy) {
+    if (!lcd || lcd.dataset.screen !== 'gallery') return false;
+    var g = document.getElementById('gGrid');
+    if (!g || g.scrollHeight <= g.clientHeight + 1) return false;
+    return dy > 0 ? g.scrollTop + g.clientHeight < g.scrollHeight - 2 : g.scrollTop > 1;
+  }
+  function post(m) { try { window.parent.postMessage(m, '*'); } catch (err) {} }
+  // Listen on the whole document (capture), so a scroll anywhere on the
+  // screen counts: blank areas, text, images and buttons alike.
+  window.addEventListener('wheel', function (e) {
+    var dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaMode === 2 ? e.deltaY * window.innerHeight : e.deltaY;
+    if (!dy) return;
+    post({ frameScroll: 'wheel', dy: dy, landing: !ownsScroll(dy) });
+  }, { passive: true, capture: true });
+  window.addEventListener('keydown', function (e) {
+    var dir = e.key === 'PageDown' ? 1 : e.key === 'PageUp' ? -1 : 0;
+    if (!dir) return;
+    post({ frameScroll: 'key', dir: dir, landing: !ownsScroll(dir) });
+  }, true);
+})();
+</script>
+</body>
+</html>
