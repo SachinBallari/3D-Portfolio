@@ -261,28 +261,30 @@
     stopTour();
     if (window.LaptopScreen && LaptopScreen.isLocked()) LaptopScreen.exit(0);
     if (window.CameraScreen && CameraScreen.isLocked()) CameraScreen.exit(0);
-    var stops = tourStops(), speed = window.innerHeight * 0.7;   // px per second while moving
-    tour = { i: 0, from: window.scrollY, t0: performance.now(), holdUntil: 0, raf: 0 };
+    // One continuous move through every checkpoint. Speed ramps down as the
+    // view reaches a checkpoint (it slows almost to a crawl but never stops),
+    // then ramps back up on the way to the next one.
+    var stops = tourStops(), vh = window.innerHeight;
+    var vMax = vh * 1.4, vMin = vh * 0.2, zone = vh * 0.5, rampIn = 0.9;
+    var marks = stops.slice(0, -1).map(function (s) { return s.y; });
+    var end = stops[stops.length - 1].y;
+    tour = { y: window.scrollY, t0: performance.now(), last: performance.now(), raf: 0 };
     root.classList.add('is-touring');
     var t = document.querySelector('[data-tour]'); if (t) t.classList.add('is-on');
-    function seg() {
-      var st = stops[tour.i], d = Math.abs(st.y - tour.from);
-      return Math.max(900, d / speed * 1000);
+    function smooth(x) { x = clamp01(x); return x * x * (3 - 2 * x); }
+    function speedAt(y, now) {
+      var d = Infinity;
+      for (var i = 0; i < marks.length; i++) d = Math.min(d, Math.abs(marks[i] - y));
+      d = Math.min(d, end - y);                                  // ease into the final stop too
+      var v = vMin + (vMax - vMin) * smooth(d / zone);
+      return v * (0.25 + 0.75 * smooth((now - tour.t0) / 1000 / rampIn));   // gentle start
     }
-    var dur = seg();
     function step(now) {
       if (!tour) return;
-      var st = stops[tour.i];
-      if (tour.holdUntil) {
-        if (now < tour.holdUntil) { tour.raf = requestAnimationFrame(step); return; }
-        tour.holdUntil = 0; tour.i++;
-        if (tour.i >= stops.length) { stopTour(); return; }
-        tour.from = window.scrollY; tour.t0 = now; dur = seg();
-        st = stops[tour.i];
-      }
-      var k = Math.min(1, (now - tour.t0) / dur);
-      window.scrollTo(0, Math.round(tour.from + (st.y - tour.from) * easeIO(k)));
-      if (k >= 1) tour.holdUntil = now + st.hold;
+      var dt = Math.min(0.05, (now - tour.last) / 1000); tour.last = now;
+      tour.y += speedAt(tour.y, now) * dt;
+      if (tour.y >= end - 0.5) { window.scrollTo(0, Math.round(end)); stopTour(); return; }
+      window.scrollTo(0, Math.round(tour.y));
       tour.raf = requestAnimationFrame(step);
     }
     tour.raf = requestAnimationFrame(step);
