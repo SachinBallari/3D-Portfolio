@@ -774,3 +774,7 @@ html[data-mode="light"] .site-nav__brand, html[data-mode="light"] .site-nav__lin
 @media (prefers-reduced-motion: reduce) { .ui-slide.is-hint .ui-slide__knob, .ui-slide.is-hint .ui-slide__fill { animation: none; } }
 .ui-slide.is-hint:hover .ui-slide__knob, .ui-slide.is-hint:hover .ui-slide__fill { animation: none; }
 .ui-slide { cursor: grab; touch-action: none; }
+
+/* Inside the laptop or camera screen the top bar stays out of the way */
+html.frame-scroll-locked .site-nav, html.frame-scroll-locked .site-nav:focus-within { transform: translateY(-150%); opacity: 0; }
+html.frame-scroll-locked .site-nav__bar, html.frame-scroll-locked .site-nav-zone { pointer-events: none; }
