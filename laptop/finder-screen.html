@@ -348,6 +348,9 @@ button.crumb:hover{background:var(--hover)}
  ],
  "Portfolio_design-system.html": [
   "cases/portfolio-design-system-1.js"
+ ],
+ "Neeru-case-study.html": [
+  "cases/neeru-case-study-1.js"
  ]
 };</script>
 <script>
@@ -368,7 +371,8 @@ const CONFIG = {
         { name: 'TAGX',         src: 'TAGX-publishable-case-study.html', mark: 'TX',  colors: ['#7657ff', '#211a50'], kind: 'Case study' },
         { name: 'POP UPI',      src: 'POP_UPI_Desktop_CaseStudy_Animated.html', mark: 'UPI', colors: ['#7b36ff', '#ff5b18'], kind: 'Case study' },
         { name: 'RBI Redesign', src: 'RBI_CaseStudy_Animated.html', mark: 'RBI', colors: ['#164f86', '#c8740d'], kind: 'Case study' },
-        { name: '3D Portfolio', src: 'Portfolio_design-system.html', mark: '3D',  colors: ['#f4c48c', '#b0623a'], kind: 'Case study' }
+        { name: '3D Portfolio', src: 'Portfolio_design-system.html', mark: '3D',  colors: ['#f4c48c', '#b0623a'], kind: 'Case study' },
+        { name: 'Neeru',        src: 'Neeru-case-study.html', mark: 'NR', colors: ['#e3a530', '#0b3442'], kind: 'Case study' }
       ]
     }
   }
@@ -740,7 +744,7 @@ setTimeout(openFinder, dur(450));
 /* ---------- Frame-scroll bridge (added for the laptop integration) ----------
    Tells the page around this one (the scroll animation) about wheel and
    arrow / page-key input, and whether this window is on its landing page
-   (Projects, with no project open). Changes nothing on screen. */
+   (any folder view, with no case study open). Changes nothing on screen. */
 (function () {
   if (window.parent === window) return;
   // Scrolling inside this page must never spill over into the page around it.
@@ -748,9 +752,9 @@ setTimeout(openFinder, dur(450));
   document.body && (document.body.style.overscrollBehavior = 'none');
   function landing() {
     try {
-      var atRoot = (typeof here === 'function') ? here() === 'root' : true;
+      // Any Finder folder view counts; only an open case study keeps the scroll.
       var open = (typeof viewerOpen !== 'undefined') && viewerOpen;
-      return atRoot && !open;
+      return !open;
     } catch (e) { return false; }
   }
   addEventListener('wheel', function (e) {

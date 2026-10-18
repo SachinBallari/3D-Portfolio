@@ -378,7 +378,7 @@
       if (now - lastWheelAt > OPTIONS.newGestureGap && now - lockedAt > OPTIONS.settleTime) gestureOk = true;
       lastWheelAt = now;
     }
-    if (!d.landing) { wheelAcc = 0; return; }   // inside a folder or case study: stay in the HTML
+    if (!d.landing) { wheelAcc = 0; gestureOk = false; return; }   // a case study is open: stay in the HTML
     if (d.frameScroll === 'key') { if (now - lockedAt > OPTIONS.settleTime) unlock(d.dir > 0 ? 1 : -1); return; }
     if (d.frameScroll === 'wheel') {
       if (!gestureOk) return;

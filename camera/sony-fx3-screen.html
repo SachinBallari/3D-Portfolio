@@ -186,6 +186,9 @@ a{color:inherit;text-decoration:none}
 // <camera-media>
 // PHOTOGRAPHY MEDIA — camera/photos
 const photographyMedia = [
+    'photos/548135477_17907573510231868_974938798159886771_n.webp',
+    'photos/625973079_17923596600231868_7020002077859966469_n.webp',
+    'photos/653398533_17929286595231868_1940025430470734941_n.webp',
     'photos/SaveVid.Net_625258052_17923626684231868_313472440058882886_n.jpg',
     'photos/SaveVid.Net_625449197_17923626720231868_9085159601143644479_n.jpg',
     'photos/SaveVid.Net_625970553_17923626702231868_3699082631112119949_n.jpg',
@@ -200,6 +203,13 @@ const photographyMedia = [
 // VIDEOGRAPHY MEDIA — camera/video
 const videographyMedia = [
     'video/AQMPKa1AgTKHLYUUjRasU1JA0uEvuGJR2zmyEd7orCPI-k4JzbCTC7B2_dFTPSTQ1qIBsk5BvgRhhmHnmlQP0rJUi6jbNW26GQiKc6s.mp4',
+    'video/AQNFq8KOUPbM9RBVLOnoLCYhh6S5yXw7iwFehuoVix_F5Ij2anpikQWvSJ4va6l44rQCHQE6A--hJHaik2obnays.mp4',
+    'video/AQO5LWUYIQm-Pl5ir9l6tAovtje1zIhZUZl4zf4EYGH7mMllz0LBjoDcsOS-zlEnWeRubnvmRt2M77nOjAtT5ekLDfXC_sP5nu9rd_k.mp4',
+    'video/AQOGI-ZsLxrzPsan7wYDbWZJC5luRzQ_X7xuOnvUMNPDe3pEIPMYktLkbFckK-Fiyewu5lGg_PS7iBbfnpIH3cWXCJ1UodbtDD8N3CI.mp4',
+    'video/AQOXiNzTU3fJUrvOUPIAOH5uDjTI24j45Y-VZjb2mYAnMkYwnVVFNlc0DpFWapcGjNGy1cggnYxO1VyoeFv_1unuFodzDh9q_mG4XxA.mp4',
+    'video/AQOfRoQoumTSNgMHzl0x-kZGn8gYArvGePhI1mnvTEsYQR4mTTMEfQp2vvASIEhfaKBrs70imyq6qznrAjuy3s_dRGvpnvgUA1Be3sM.mp4',
+    'video/AQP0t8xkX8iUiz4Cv-Sh_OeKRHgMcKApAJc3dcsp10U_HCgKC4fPuNYbzH31PeWBKSYRJZzBVlzMAvwwQMbaDZWvWTw1Mbq607KWSns.mp4',
+    'video/AQPb6HknQtIkww37cG9KqSTCipadMZN_NRIRnt2IZtZ4ZEuDHRM7KkGxW15anLVR6PsVGSFul3_nYlSEjTwXuEj1WvhX2sTsQ4ZanBc.mp4',
 ];
 // </camera-media>
 
@@ -567,12 +577,10 @@ show('home');
   document.documentElement.classList.add('fs-embedded');
   document.documentElement.style.overscrollBehavior = 'none';
   var lcd = document.getElementById('lcd');
-  // Can the camera HTML itself still scroll this way?
-  function ownsScroll(dy) {
-    if (!lcd || lcd.dataset.screen !== 'gallery') return false;
-    var g = document.getElementById('gGrid');
-    if (!g || g.scrollHeight <= g.clientHeight + 1) return false;
-    return dy > 0 ? g.scrollTop + g.clientHeight < g.scrollHeight - 2 : g.scrollTop > 1;
+  // Only the main menu hands scrolling back to the animation. In the
+  // gallery or a photo/video, scrolling always stays inside the camera.
+  function ownsScroll() {
+    return !lcd || lcd.dataset.screen !== 'home';
   }
   function post(m) { try { window.parent.postMessage(m, '*'); } catch (err) {} }
   // Listen on the whole document (capture), so a scroll anywhere on the
@@ -580,12 +588,12 @@ show('home');
   window.addEventListener('wheel', function (e) {
     var dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaMode === 2 ? e.deltaY * window.innerHeight : e.deltaY;
     if (!dy) return;
-    post({ frameScroll: 'wheel', dy: dy, landing: !ownsScroll(dy) });
+    post({ frameScroll: 'wheel', dy: dy, landing: !ownsScroll() });
   }, { passive: true, capture: true });
   window.addEventListener('keydown', function (e) {
     var dir = e.key === 'PageDown' ? 1 : e.key === 'PageUp' ? -1 : 0;
     if (!dir) return;
-    post({ frameScroll: 'key', dir: dir, landing: !ownsScroll(dir) });
+    post({ frameScroll: 'key', dir: dir, landing: !ownsScroll() });
   }, true);
 })();
 </script>
