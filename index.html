@@ -72,9 +72,9 @@
 
     <section class="ui-landing ui-fade is-on" data-show="landing" aria-labelledby="landing-title">
       <div class="ui-landing__copy">
-        <p class="ui-eyebrow">Portfolio, 2026</p>
-        <h1 id="landing-title">Same Space.<br>A Brighter Mind.</h1>
-        <p class="ui-landing__intro">I’m Sachin, a student who designs interfaces, writes code, takes photographs and draws.</p>
+        <p class="ui-eyebrow">Product design portfolio</p>
+        <h1 id="landing-title">I design marketplace and public-service apps.</h1>
+        <p class="ui-landing__intro">Sachin S Ballari, Electronics and Communication student at SDMCET, Dharwad. I design in Figma and build what I design in code. Available now for product design internships.</p>
         <div class="ui-slide lg" data-slide>
           <span class="ui-slide__fill" aria-hidden="true"></span>
           <span class="ui-slide__label" aria-hidden="true"><span class="ui-slide__text">Slide to start the tour</span></span>
@@ -82,6 +82,8 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
           </button>
         </div>
+        <button type="button" class="ui-cases-btn" data-cases>See 5 case studies
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
       </div>
       <div class="ui-landing__foot">
         <span class="ui-scrollcue">Scroll<i aria-hidden="true"></i></span>
@@ -120,6 +122,12 @@
       <span class="ui-tour__text">Tour playing</span>
       <button type="button" class="ui-tour__stop">Stop</button>
     </div>
+
+    <div class="ui-views" data-views hidden>
+      <span class="ui-views__label">Portfolio views</span>
+      <span class="ui-views__num" data-views-num data-text="–" aria-live="polite">–</span>
+    </div>
+    <div class="ui-toast" data-toast role="status" aria-live="polite"></div>
 
     <div class="ui-guide lg ui-fade" data-guide aria-hidden="true">
       <span class="ui-guide__icon"></span>
@@ -175,11 +183,10 @@
             <li><a href="https://www.linkedin.com/in/sachin-s-b-0715a6252/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 9h3v10H5zM6.5 4a1.7 1.7 0 1 1 0 3.4 1.7 1.7 0 0 1 0-3.4zM10 9h2.9v1.4c.4-.8 1.4-1.6 3-1.6 3.1 0 3.6 2 3.6 4.6V19h-3v-5c0-1.2 0-2.7-1.7-2.7S13 12.6 13 13.9V19h-3z"/></svg></a></li>
             <li><a href="https://www.instagram.com/sachframes/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.6"/><circle cx="17" cy="7" r=".8" fill="currentColor"/></svg></a></li>
             <li><a href="https://www.behance.net/sachinballari" target="_blank" rel="noopener noreferrer" aria-label="Behance">Bē</a></li>
-            <li><a href="https://dribbble.com/sachin-ballari" target="_blank" rel="noopener noreferrer" aria-label="Dribbble"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M5 8.5c5 .5 10-.5 13.5-3M3.6 13c5-2 11-2 16 0M9 4c3 4 5 10 5.5 16"/></svg></a></li>
-            <li><a href="mailto:sachinballari061@gmail.com" aria-label="Email"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="6" width="17" height="12" rx="2"/><path d="M4 7l8 6 8-6"/></svg></a></li>
+            <li><a href="mailto:sachinballari061@gmail.com" aria-label="Copy email address" data-copy-email="sachinballari061@gmail.com"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="6" width="17" height="12" rx="2"/><path d="M4 7l8 6 8-6"/></svg></a></li>
           </ul>
         </div>
-        <nav aria-label="Rooms">
+        <nav aria-label="Sections">
           <h3>Sections</h3>
           <ul class="site-end__menu">
             <li><a href="#top" data-go="top" data-smooth="true">Home</a></li>
@@ -195,7 +202,6 @@
             <li><a href="https://www.linkedin.com/in/sachin-s-b-0715a6252/" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
             <li><a href="https://www.instagram.com/sachframes/" target="_blank" rel="noopener noreferrer">Instagram</a></li>
             <li><a href="https://www.behance.net/sachinballari" target="_blank" rel="noopener noreferrer">Behance</a></li>
-            <li><a href="https://dribbble.com/sachin-ballari" target="_blank" rel="noopener noreferrer">Dribbble</a></li>
           </ul>
         </nav>
         <div>

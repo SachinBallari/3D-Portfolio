@@ -433,6 +433,7 @@
     pause: function () { return pause; },
     isLocked: function () { return locked; },
     screenQuad: function () { return lastQuad; },   // where the HTML sits now (stage px)
-    exit: unlock
+    exit: unlock,
+    enter: function () { if (!locked) lock(); }   // go straight to the full-screen laptop
   };
 })();

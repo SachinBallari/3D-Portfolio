@@ -387,7 +387,7 @@ const viewer = $('#viewer'), vBody = $('#vBody'), vTitle = $('#vTitle'), vBackLa
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const dur = ms => reduce ? 1 : ms;
 
-let hist = ['root'], idx = 0;
+let hist = ['root', 'uiux'], idx = 1;   // open straight into the case studies
 let busy = false, finderOpen = false, viewerOpen = false, lastIcon = null, reopenTimer = null;
 const here = () => hist[idx];
 
@@ -517,7 +517,7 @@ document.addEventListener('click', e => {
 /* ---------- Finder open / close / auto-reopen ---------- */
 function openFinder(){
   clearTimeout(reopenTimer);
-  hist = ['root']; idx = 0; render();
+  hist = ['root', 'uiux']; idx = 1; render();
   finder.classList.remove('is-closed');
   finderOpen = true; busy = true;
   setRunning(true);

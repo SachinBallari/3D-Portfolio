@@ -131,6 +131,13 @@ a{color:inherit;text-decoration:none}
 .seek i{position:absolute;left:0;top:0;bottom:0;width:0;background:#fff;border-radius:.4cqh}
 .vtime{white-space:nowrap}
 .vbtn{width:5.4cqh;height:5.4cqh;display:grid;place-items:center;font-size:3.6cqh}
+.vvol{-webkit-appearance:none;appearance:none;width:14cqh;height:5cqh;margin:0;background:transparent;cursor:pointer}
+.vvol::-webkit-slider-runnable-track{height:.8cqh;border-radius:.4cqh;background:linear-gradient(90deg,#fff var(--v,80%),rgba(255,255,255,.3) var(--v,80%))}
+.vvol::-moz-range-track{height:.8cqh;border-radius:.4cqh;background:rgba(255,255,255,.3)}
+.vvol::-moz-range-progress{height:.8cqh;border-radius:.4cqh;background:#fff}
+.vvol::-webkit-slider-thumb{-webkit-appearance:none;width:2.4cqh;height:2.4cqh;margin-top:-.8cqh;border-radius:50%;background:#fff;border:0}
+.vvol::-moz-range-thumb{width:2.4cqh;height:2.4cqh;border-radius:50%;background:#fff;border:0}
+.vvol:focus-visible{outline:.35cqh solid var(--orange);outline-offset:.2cqh}
 .v-nav{position:absolute;top:50%;transform:translateY(-50%);width:8cqh;height:14cqh;display:grid;place-items:center;font-size:5.4cqh;
   opacity:.75;filter:drop-shadow(0 0 .4cqh #000)}
 .v-nav:hover{opacity:1}
@@ -286,7 +293,7 @@ const safeIG = /^https:\/\//.test(INSTAGRAM_URL) ? INSTAGRAM_URL : '';
 const ROWS = SECTIONS.length + (safeIG ? 1 : 0);   // Photography, Videography, Instagram
 const IG_ROW = SECTIONS.length;
 
-const state = { screen: 'home', row: 0, sec: 0, tile: 0, item: 0, muted: true };
+const state = { screen: 'home', row: 0, sec: 0, tile: 0, item: 0, muted: true, volume: 0.8 };
 const section = () => SECTIONS[state.sec];
 
 function show(screen) {
@@ -416,7 +423,8 @@ function openViewer(i) {
       <div class="v-bot"><span class="fname">${esc(it.name)}</span>
         ${vid ? `<div class="seek" id="vSeek"><b><i id="vBar"></i></b></div><span class="vtime" id="vTime">0:00:00</span>
                  <button class="vbtn" data-act="toggle" id="vPP" aria-label="Play or pause">${I.play}</button>
-                 <button class="vbtn" data-act="mute" id="vMute" aria-label="${state.muted ? 'Unmute' : 'Mute'}">${state.muted ? I.mute : I.vol}</button>` : ''}
+                 <button class="vbtn" data-act="mute" id="vMute" aria-label="${state.muted ? 'Unmute' : 'Mute'}">${state.muted ? I.mute : I.vol}</button>
+                 <input type="range" class="vvol" id="vVol" min="0" max="1" step="0.05" value="${state.muted ? 0 : state.volume}" aria-label="Volume" style="--v:${state.muted ? 0 : state.volume * 100}%">` : ''}
       </div>
       <button class="keycap" data-act="back" aria-label="Back to gallery"><span class="kc">MENU</span>${I.back}</button>
     </div>`;
@@ -424,7 +432,7 @@ function openViewer(i) {
   let el;
   if (vid) {
     el = document.createElement('video');
-    el.muted = state.muted; el.playsInline = true; el.setAttribute('playsinline', '');
+    el.muted = state.muted; el.volume = state.volume; el.playsInline = true; el.setAttribute('playsinline', '');
     el.preload = 'auto'; el.disablePictureInPicture = true;
     if (it.poster) el.poster = it.poster;
     el.src = it.poster ? it.src : frameSrc(it.src);
@@ -459,10 +467,20 @@ function togglePlay() {
   const v = activeVideo(); if (!v) return;
   if (v.paused || v.ended) { if (v.ended) v.currentTime = 0; v.play().catch(() => {}); } else v.pause();
 }
+function syncSound() {
+  const v = activeVideo(); if (v) { v.muted = state.muted; v.volume = state.volume; }
+  const b = $('vMute'); if (b) { b.innerHTML = state.muted ? I.mute : I.vol; b.setAttribute('aria-label', state.muted ? 'Unmute' : 'Mute'); }
+  const r = $('vVol'); if (r) { const val = state.muted ? 0 : state.volume; r.value = val; r.style.setProperty('--v', val * 100 + '%'); }
+}
 function toggleMute() {
   state.muted = !state.muted;
-  const v = activeVideo(); if (v) v.muted = state.muted;
-  const b = $('vMute'); if (b) { b.innerHTML = state.muted ? I.mute : I.vol; b.setAttribute('aria-label', state.muted ? 'Unmute' : 'Mute'); }
+  if (!state.muted && state.volume === 0) state.volume = 0.8;   // unmuting from zero comes back audible
+  syncSound();
+}
+function setVolume(val) {
+  state.volume = clamp(val, 0, 1);
+  state.muted = state.volume === 0;
+  syncSound();
 }
 
 /* ---------------- Navigation ---------------- */
@@ -479,7 +497,11 @@ function act(name) {
 }
 
 let down = null, swiped = false;
-lcd.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY }; swiped = false; });
+lcd.addEventListener('input', e => { if (e.target.id === 'vVol') setVolume(+e.target.value); });
+lcd.addEventListener('pointerdown', e => {
+  if (e.target.closest('.vvol')) { down = null; return; }   // dragging the volume is not a swipe
+  down = { x: e.clientX, y: e.clientY }; swiped = false;
+});
 lcd.addEventListener('pointerup', e => {
   if (!down || state.screen !== 'viewer') { down = null; return; }
   const dx = e.clientX - down.x, dy = e.clientY - down.y; down = null;
@@ -489,6 +511,7 @@ lcd.addEventListener('pointerup', e => {
 });
 lcd.addEventListener('click', e => {
   if (swiped) { swiped = false; return; }
+  if (e.target.closest('.vvol')) return;
   const row = e.target.closest('.m-row');
   if (row) { setRow(+row.dataset.row); if (state.row !== IG_ROW) openGallery(state.row); return; }   // the Instagram row is a real link
   const tile = e.target.closest('.tile');
@@ -521,6 +544,7 @@ document.addEventListener('keydown', e => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   const k = e.key;
   if ((k === 'Enter' || k === ' ') && e.target.closest?.('a')) return;   // let the Instagram link work
+  if (e.target.closest?.('.vvol') && k.startsWith('Arrow')) return;   // arrows adjust the volume slider
   const keys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', ' ', 'Escape', 'Backspace'];
   if (!keys.includes(k)) return;
   e.preventDefault();

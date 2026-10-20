@@ -98,6 +98,18 @@
     snap();
     requestAnimationFrame(function () { snap(); requestAnimationFrame(snap); });
   }
+  // "See case studies": straight to the laptop, full screen, no animation on the way
+  function openCases() {
+    if (tour) stopTour();
+    var py = FS && FS.pauseScrollY('2');
+    if (py == null || !window.LaptopScreen) { jumpTo('work'); return; }
+    if (window.CameraScreen && CameraScreen.isLocked()) CameraScreen.exit(0);
+    jumpingUntil = performance.now() + 400;
+    window.scrollTo({ top: Math.round(py), behavior: 'instant' });
+    if (FS.snap) FS.snap();
+    LaptopScreen.enter();
+    requestAnimationFrame(function () { if (FS.snap) FS.snap(); });
+  }
   window.addEventListener('scroll', function () {
     if (jumpingUntil && performance.now() < jumpingUntil) jumpingUntil = Math.max(jumpingUntil, performance.now() + 150);
   }, { passive: true });
@@ -378,6 +390,85 @@
   }
 
   /* ---------- setup ---------- */
+
+  /* ---------- copy email ---------- */
+  var toastTimer = 0;
+  function toast(msg) {
+    var t = document.querySelector('[data-toast]'); if (!t) return;
+    t.textContent = msg; t.classList.add('is-on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove('is-on'); }, 2600);
+  }
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text).catch(function () { return legacyCopy(text); });
+    }
+    return legacyCopy(text);
+  }
+  function legacyCopy(text) {
+    return new Promise(function (ok, fail) {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      var done = false; try { done = document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      done ? ok() : fail();
+    });
+  }
+  function wireCopyEmail() {
+    document.querySelectorAll('[data-copy-email]').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        var mail = a.getAttribute('data-copy-email');
+        copyText(mail).then(function () { toast('Email copied: ' + mail); },
+                            function () { toast('Couldn’t copy. Email: ' + mail); });
+      });
+    });
+  }
+
+  /* ---------- portfolio view count ----------
+     A free public counter (abacus.jasoncameron.dev). Only the live site
+     adds a view, once per browser session; everywhere else just reads it.
+     If the counter can't be reached, nothing is shown. */
+  var VIEWS_URL = 'https://abacus.jasoncameron.dev';
+  var VIEWS_KEY = 'sachin-ballari-3d-portfolio/views';
+  var LIVE_HOST = /(^|\.)3d-portfolio-nine-ecru\.vercel\.app$/;
+  function showViews(n) {
+    var box = document.querySelector('[data-views]'), num = document.querySelector('[data-views-num]');
+    if (!box || !num || typeof n !== 'number') return;
+    num.textContent = n.toLocaleString('en-IN');
+    num.setAttribute('data-text', num.textContent);   // the glitch layers copy this
+    box.hidden = false;
+  }
+  function fetchViews(add) {
+    return fetch(VIEWS_URL + (add ? '/hit/' : '/get/') + VIEWS_KEY, { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw r.status; return r.json(); })
+      .then(function (d) { showViews(d.value); })
+      .catch(function () {
+        // Off the live site (review page, local file) keep the spot visible so
+        // the layout can be checked; on the live site an outage just hides it.
+        if (!LIVE_HOST.test(location.hostname)) { var b = document.querySelector('[data-views]'); if (b) b.hidden = false; }
+      });
+  }
+  function wireViews() {
+    var seen = false; try { seen = sessionStorage.getItem('fs-viewed-session') === '1'; } catch (e) {}
+    var add = LIVE_HOST.test(location.hostname) && !seen;
+    if (add) { try { sessionStorage.setItem('fs-viewed-session', '1'); } catch (e) {} }
+    fetchViews(add);
+    setInterval(function () { if (window.scrollY < window.innerHeight && !document.hidden) fetchViews(false); }, 30000);
+    // blur and fade out as the scroll animation begins
+    var box = document.querySelector('[data-views]');
+    var fade = function () {
+      if (!box) return;
+      var k = clamp01(window.scrollY / (window.innerHeight * 0.45));
+      box.style.opacity = String(1 - k);
+      box.style.filter = k > 0.001 ? 'blur(' + (k * 10).toFixed(2) + 'px)' : 'none';
+      box.style.visibility = k >= 0.999 ? 'hidden' : '';
+    };
+    window.addEventListener('scroll', fade, { passive: true });
+    fade();
+  }
+
   function init() {
     pixels = document.querySelector('.ui-pixels');
     navInd = document.querySelector('.site-nav__ind');
@@ -392,6 +483,17 @@
       else { mp.setAttribute('aria-disabled', 'true'); mp.title = 'Link coming soon'; mp.addEventListener('click', function (e) { e.preventDefault(); }); }
     }
     wireTourStops();
+    wireCopyEmail();
+    wireViews();
+    var cb = document.querySelector('[data-cases]');
+    if (cb) cb.addEventListener('click', openCases);
+    // Home / End go to the top and the footer directly, past the screens
+    window.addEventListener('keydown', function (e) {
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+      if (e.target && e.target.closest && e.target.closest('input,textarea,select,[contenteditable]')) return;
+      if (e.key === 'End') { e.preventDefault(); jumpTo('contact'); }
+      else if (e.key === 'Home') { e.preventDefault(); jumpTo('top'); }
+    });
     setMode(store('fs-mode') || 'dark');
     document.querySelectorAll('[data-show]').forEach(function (el) { els[el.dataset.show] = el; });
 
