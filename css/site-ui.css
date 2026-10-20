@@ -850,3 +850,4 @@ html[data-mode="light"] .ui-landing .ui-landing__copy .ui-cases-btn { border-col
 .ui-views__num { animation: ui-glitch-shake 4.2s steps(1, end) infinite; }
 @keyframes ui-glitch-shake { 0%, 84%, 92%, 100% { transform: none; } 86% { transform: translate(1px, 0) skewX(-4deg); } 89% { transform: translate(-1px, 0) skewX(3deg); } }
 @media (prefers-reduced-motion: reduce) { .ui-views__num, .ui-views__num::before, .ui-views__num::after { animation: none; } }
+.ui-views__num { font-size: 44px; letter-spacing: -.6px; }
