@@ -433,10 +433,13 @@
   var VIEWS_URL = 'https://abacus.jasoncameron.dev';
   var VIEWS_KEY = 'sachin-ballari-3d-portfolio/views';
   var LIVE_HOST = /(^|\.)3d-portfolio-nine-ecru\.vercel\.app$/;
+  // Visits before the counter went live on 20 Oct 2026 (Sachin's figure); every
+  // visit since then is counted by the service and added on top.
+  var VIEWS_BEFORE_COUNTER = 32;
   function showViews(n) {
     var box = document.querySelector('[data-views]'), num = document.querySelector('[data-views-num]');
     if (!box || !num || typeof n !== 'number') return;
-    num.textContent = n.toLocaleString('en-IN');
+    num.textContent = (n + VIEWS_BEFORE_COUNTER).toLocaleString('en-IN');
     num.setAttribute('data-text', num.textContent);   // the glitch layers copy this
     box.hidden = false;
   }
