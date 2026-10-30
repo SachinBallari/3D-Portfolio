@@ -614,6 +614,25 @@ show('home');
     if (!dy) return;
     post({ frameScroll: 'wheel', dy: dy, landing: !ownsScroll() });
   }, { passive: true, capture: true });
+  // Asked by the page before the view pulls out: ease back to the main menu.
+  window.addEventListener('message', function (ev) {
+    if (ev.source !== window.parent || !ev.data || !ev.data.fxHome) return;
+    var reply = function () { post({ fxAtHome: true }); };
+    var screen = lcd && lcd.dataset.screen;
+    if (!lcd || screen === 'home') { reply(); return; }
+    var steps = screen === 'viewer' ? 2 : 1;
+    var esc = function () { for (var i = 0; i < steps; i++) document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); };
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches || !lcd.animate) { esc(); reply(); return; }
+    var out = lcd.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(.985)' }],
+      { duration: 170, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' });
+    out.onfinish = function () {
+      esc();
+      var inn = lcd.animate([{ opacity: 0, transform: 'scale(1.012)' }, { opacity: 1, transform: 'none' }],
+        { duration: 260, easing: 'cubic-bezier(.2,.8,.2,1)' });
+      out.cancel();
+      inn.onfinish = function () { setTimeout(reply, 140); };
+    };
+  });
   window.addEventListener('keydown', function (e) {
     var dir = e.key === 'PageDown' ? 1 : e.key === 'PageUp' ? -1 : 0;
     if (!dir) return;

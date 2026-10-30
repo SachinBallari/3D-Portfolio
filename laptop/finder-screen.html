@@ -82,7 +82,8 @@ button.side-item:hover{background:rgba(0,0,0,.05)}
 .side-item.static svg{color:#8e8d96}
 
 /* main pane */
-.main{display:grid;grid-template-rows:52px 1fr 28px;min-width:0;background:var(--pane)}
+.main{position:relative;display:grid;grid-template-rows:52px minmax(0,1fr) 28px;min-width:0;min-height:0;background:var(--pane)}
+.finder{grid-template-rows:minmax(0,1fr)}
 .toolbar{display:flex;align-items:center;gap:6px;padding:0 14px 0 12px;border-bottom:1px solid var(--hair)}
 .nav-btn{width:30px;height:28px;border-radius:6px;display:grid;place-items:center;color:#56565b;transition:background-color .15s,opacity .15s;cursor:default}
 .nav-btn:hover:not(:disabled){background:var(--hover)}
@@ -118,7 +119,51 @@ button.crumb:hover{background:var(--hover)}
 .crumb-sep{color:#b5b5ba}
 
 /* ============================================================
-   DOCK (hover only — not clickable)
+   PHOTOS / VIDEOS / DRAWINGS (opened from the dock)
+   ============================================================ */
+.finder{transition:width .38s var(--ease-out),height .38s var(--ease-out)}
+.finder.is-media{width:min(1120px,100%);height:min(720px,100%)}
+.finder.is-media .tool-deco{display:none}
+.m-seg{display:none;align-items:center;height:28px;padding:2px;border-radius:8px;background:rgba(0,0,0,.06);margin-right:10px}
+.finder.is-media .m-seg{display:flex}
+.m-seg button{height:24px;padding:0 12px;border-radius:6px;font-size:12.5px;font-weight:500;color:#3a3a3f;cursor:default;transition:background-color .15s,box-shadow .15s}
+.m-seg button[aria-pressed="true"]{background:#fff;box-shadow:0 0 0 .5px rgba(0,0,0,.12),0 1px 2px rgba(0,0,0,.12);font-weight:600}
+.m-seg button:focus-visible{outline:2px solid var(--select);outline-offset:1px}
+.content.is-media{padding:18px 18px 24px}
+.m-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:2px 4px 14px}
+.m-head h2{margin:0;font-size:22px;font-weight:700;letter-spacing:-.02em}
+.m-head p{margin:0;font-size:12.5px;color:var(--muted)}
+.grid.is-media{grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:3px}
+.m-tile{position:relative;display:block;aspect-ratio:1;overflow:hidden;padding:0;border:0;background:#ececf0;cursor:default;outline:none}
+.m-tile img,.m-tile video{display:block;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .35s ease}
+.m-tile.is-loaded img,.m-tile.is-loaded video{opacity:1}
+.m-tile::after{content:"";position:absolute;inset:0;pointer-events:none;transition:box-shadow .12s}
+.m-tile:hover::after{background:rgba(0,0,0,.06)}
+.m-tile.selected::after,.m-tile:focus-visible::after{box-shadow:inset 0 0 0 3px var(--select)}
+.m-dur{position:absolute;right:7px;bottom:6px;display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6);pointer-events:none;font-variant-numeric:tabular-nums}
+.m-dur svg{width:9px;height:9px}
+.grid.is-media.is-art .m-tile{background:#f3efe6}
+/* the viewer: fills the window, like opening a photo in Photos */
+.mv{position:absolute;inset:0;z-index:8;display:grid;grid-template-rows:52px minmax(0,1fr);grid-template-columns:minmax(0,1fr);background:#1b1b1d;color:#f2f2f4}
+.mv[hidden]{display:none}
+.mv-bar{display:flex;align-items:center;gap:10px;padding:0 10px 0 14px;border-bottom:1px solid rgba(255,255,255,.08)}
+.mv-back{display:flex;align-items:center;gap:6px;height:28px;padding:0 10px 0 8px;border-radius:6px;font-size:13px;color:#e8e8ec;cursor:default}
+.mv-back:hover{background:rgba(255,255,255,.1)}
+.mv-title{flex:1;text-align:center;font-size:13px;font-weight:600}
+.mv-title span{display:block;font-size:11px;font-weight:400;color:#9a9aa2;margin-top:1px}
+.mv-close{width:28px;height:28px;border-radius:6px;display:grid;place-items:center;color:#cfcfd4;cursor:default}
+.mv-close:hover{background:rgba(255,255,255,.1)}
+.mv-stage{position:relative;min-height:0;overflow:hidden}
+.mv-stage img,.mv-stage video{position:absolute;inset:0;margin:auto;width:auto;height:auto;max-width:calc(100% - 128px);max-height:calc(100% - 36px);object-fit:contain;display:block;border-radius:2px;box-shadow:0 10px 40px rgba(0,0,0,.45)}
+.mv-stage video{width:calc(100% - 128px);height:calc(100% - 36px);background:#000}
+.mv-nav{position:absolute;top:50%;width:36px;height:36px;margin-top:-18px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.12);color:#fff;cursor:default;transition:background-color .15s,opacity .15s}
+.mv-nav:hover{background:rgba(255,255,255,.22)}
+.mv-nav:disabled{opacity:.25}
+.mv-prev{left:14px}.mv-next{right:14px}
+.mv-back:focus-visible,.mv-close:focus-visible,.mv-nav:focus-visible{outline:2px solid #6aa8ff;outline-offset:1px}
+
+/* ============================================================
+   DOCK (shortcuts to the rest of the portfolio)
    ============================================================ */
 .dock-wrap{position:absolute;z-index:6;left:0;right:0;bottom:8px;display:flex;justify-content:center;pointer-events:none}
 .dock{pointer-events:auto;height:70px;display:flex;align-items:flex-end;gap:6px;padding:0 8px 8px;border-radius:20px;
@@ -133,6 +178,11 @@ button.crumb:hover{background:var(--hover)}
 .dock-item .dot{position:absolute;left:50%;bottom:-6px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:rgba(255,255,255,.9);opacity:0;transition:opacity .3s}
 .dock-item.running .dot{opacity:1}
 .dock-sep{width:1px;align-self:stretch;margin:10px 4px 2px;background:rgba(255,255,255,.4)}
+.dock-item{cursor:pointer;border:0;padding:0;background:none;color:inherit;font:inherit;-webkit-tap-highlight-color:transparent}
+.dock-item:focus{outline:none}
+.dock-item:focus-visible .tip{opacity:1;transform:translate(-50%,0)}
+.dock-item:focus-visible svg{outline:2px solid rgba(255,255,255,.95);outline-offset:3px;border-radius:14px}
+.dock-item:active svg{filter:drop-shadow(0 3px 5px rgba(0,0,0,.22)) brightness(.82)}
 
 /* ============================================================
    FULL-SCREEN PROJECT VIEWER
@@ -196,6 +246,16 @@ button.crumb:hover{background:var(--hover)}
     <linearGradient id="dSettings" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9d9de"/><stop offset="1" stop-color="#9a9aa2"/></linearGradient>
     <linearGradient id="dDownloads" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7cc6ff"/><stop offset="1" stop-color="#3a8ff0"/></linearGradient>
     <linearGradient id="dTrash" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f4f7"/><stop offset="1" stop-color="#c9c9d0"/></linearGradient>
+    <linearGradient id="dSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7cc4ff"/><stop offset="1" stop-color="#c9e6ff"/></linearGradient>
+    <linearGradient id="dHill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5dbb63"/><stop offset="1" stop-color="#2f8a4a"/></linearGradient>
+    <linearGradient id="dCam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b3b43"/><stop offset="1" stop-color="#151519"/></linearGradient>
+    <linearGradient id="dCamBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3f3f6"/><stop offset="1" stop-color="#cfcfd6"/></linearGradient>
+    <radialGradient id="dLens" cx=".38" cy=".34" r=".8"><stop offset="0" stop-color="#5d7fb8"/><stop offset=".45" stop-color="#1f2b44"/><stop offset="1" stop-color="#07080c"/></radialGradient>
+    <linearGradient id="dPaper" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbf6ea"/><stop offset="1" stop-color="#e9dfc8"/></linearGradient>
+    <linearGradient id="dPencil" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f6c453"/><stop offset=".5" stop-color="#eaa93a"/><stop offset="1" stop-color="#d48f25"/></linearGradient>
+    <linearGradient id="dAbout" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e3b98b"/><stop offset="1" stop-color="#a7713f"/></linearGradient>
+    <linearGradient id="dDoc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f1f1f4"/><stop offset="1" stop-color="#cfd0d8"/></linearGradient>
+    <linearGradient id="dMail" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6cc4ff"/><stop offset="1" stop-color="#1769e0"/></linearGradient>
   </defs>
 </svg>
 
@@ -292,6 +352,11 @@ button.crumb:hover{background:var(--hover)}
           <button class="nav-btn" id="btnFwd" aria-label="Forward" disabled><svg width="9" height="14" viewBox="0 0 9 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 1l5.5 6L2 13"/></svg></button>
           <div class="title" id="title">Projects</div>
           <div class="spacer"></div>
+          <div class="m-seg" id="mSeg" role="group" aria-label="Library">
+            <button type="button" data-media="photos" aria-pressed="false">Photos</button>
+            <button type="button" data-media="videos" aria-pressed="false">Videos</button>
+            <button type="button" data-media="drawings" aria-pressed="false">Drawings</button>
+          </div>
           <div class="tool-deco" aria-hidden="true">
             <div class="seg">
               <span class="on"><svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="1" y="1" width="5" height="5" rx="1.2"/><rect x="8" y="1" width="5" height="5" rx="1.2"/><rect x="1" y="8" width="5" height="5" rx="1.2"/><rect x="8" y="8" width="5" height="5" rx="1.2"/></svg></span>
@@ -306,6 +371,17 @@ button.crumb:hover{background:var(--hover)}
         </div>
 
         <div class="content" id="content"><div class="grid" id="grid" role="list"></div></div>
+        <div class="mv" id="mv" role="dialog" aria-modal="true" aria-labelledby="mvTitle" hidden>
+          <div class="mv-bar">
+            <button type="button" class="mv-back" id="mvBack"><svg width="8" height="12" viewBox="0 0 9 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 1 1.5 7 7 13"/></svg><span id="mvBackLabel">Photos</span></button>
+            <div class="mv-title" id="mvTitle"></div>
+            <button type="button" class="mv-close" id="mvClose" aria-label="Close"><svg width="12" height="12" viewBox="0 0 12 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 2l8 8M10 2 2 10"/></svg></button>
+          </div>
+          <div class="mv-stage" id="mvStage">
+            <button type="button" class="mv-nav mv-prev" id="mvPrev" aria-label="Previous"><svg width="9" height="14" viewBox="0 0 9 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 1 1.5 7 7 13"/></svg></button>
+            <button type="button" class="mv-nav mv-next" id="mvNext" aria-label="Next"><svg width="9" height="14" viewBox="0 0 9 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 1l5.5 6L2 13"/></svg></button>
+          </div>
+        </div>
 
         <footer class="pathbar">
           <div class="crumbs" id="crumbs"></div>
@@ -317,7 +393,7 @@ button.crumb:hover{background:var(--hover)}
 
   <!-- Dock: hover effects only, nothing is clickable -->
   <div class="dock-wrap">
-    <div class="dock" id="dock" aria-hidden="true"></div>
+    <nav class="dock" id="dock" aria-label="Go to"></nav>
   </div>
 </div>
 
@@ -378,6 +454,22 @@ const CONFIG = {
   }
 };
 
+
+/* Photos, Videos and Drawings: opened from the dock, not listed in Projects.
+   Each folder reads ONLY from its own source folder, named file by file:
+     photos   → ../camera/photos/      (the camera's Photography gallery)
+     videos   → ../camera/video/       (the camera's Videography gallery)
+     drawings → ../album/assets/artwork/ (the art album, in album order)  */
+const MEDIA = {
+  photos:   { title: 'Photos',   label: 'Photography', noun: ['photo', 'photos'],     base: '../camera/photos/', type: 'image',
+              files: ["548135477_17907573510231868_974938798159886771_n.webp", "625973079_17923596600231868_7020002077859966469_n.webp", "653398533_17929286595231868_1940025430470734941_n.webp", "SaveVid.Net_625258052_17923626684231868_313472440058882886_n.jpg", "SaveVid.Net_625449197_17923626720231868_9085159601143644479_n.jpg", "SaveVid.Net_625970553_17923626702231868_3699082631112119949_n.jpg", "SaveVid.Net_627002920_17923626738231868_3889022696531305817_n.jpg", "WhatsApp Image 2026-08-24 at 7.36.41 PM (1).jpeg", "WhatsApp Image 2026-08-24 at 7.36.41 PM.jpeg", "WhatsApp Image 2026-08-24 at 7.36.42 PM (1).jpeg", "WhatsApp Image 2026-08-24 at 7.36.42 PM.jpeg", "WhatsApp Image 2026-09-18 at 6.00.08 PM.jpeg"] },
+  videos:   { title: 'Videos',   label: 'Videography', noun: ['video', 'videos'],     base: '../camera/video/', type: 'video',
+              files: ["AQMPKa1AgTKHLYUUjRasU1JA0uEvuGJR2zmyEd7orCPI-k4JzbCTC7B2_dFTPSTQ1qIBsk5BvgRhhmHnmlQP0rJUi6jbNW26GQiKc6s.mp4", "AQNFq8KOUPbM9RBVLOnoLCYhh6S5yXw7iwFehuoVix_F5Ij2anpikQWvSJ4va6l44rQCHQE6A--hJHaik2obnays.mp4", "AQO5LWUYIQm-Pl5ir9l6tAovtje1zIhZUZl4zf4EYGH7mMllz0LBjoDcsOS-zlEnWeRubnvmRt2M77nOjAtT5ekLDfXC_sP5nu9rd_k.mp4", "AQOGI-ZsLxrzPsan7wYDbWZJC5luRzQ_X7xuOnvUMNPDe3pEIPMYktLkbFckK-Fiyewu5lGg_PS7iBbfnpIH3cWXCJ1UodbtDD8N3CI.mp4", "AQOXiNzTU3fJUrvOUPIAOH5uDjTI24j45Y-VZjb2mYAnMkYwnVVFNlc0DpFWapcGjNGy1cggnYxO1VyoeFv_1unuFodzDh9q_mG4XxA.mp4", "AQOfRoQoumTSNgMHzl0x-kZGn8gYArvGePhI1mnvTEsYQR4mTTMEfQp2vvASIEhfaKBrs70imyq6qznrAjuy3s_dRGvpnvgUA1Be3sM.mp4", "AQP0t8xkX8iUiz4Cv-Sh_OeKRHgMcKApAJc3dcsp10U_HCgKC4fPuNYbzH31PeWBKSYRJZzBVlzMAvwwQMbaDZWvWTw1Mbq607KWSns.mp4", "AQPb6HknQtIkww37cG9KqSTCipadMZN_NRIRnt2IZtZ4ZEuDHRM7KkGxW15anLVR6PsVGSFul3_nYlSEjTwXuEj1WvhX2sTsQ4ZanBc.mp4"],
+              poster: f => 'posters/' + f.replace(/\.mp4$/, '.jpg'),   // stills made from these same clips, kept in camera/video/posters/
+              seconds: [32.4, 12.4, 25.2, 17.2, 7.3, 16.4, 43.0, 10.8] },
+  drawings: { title: 'Drawings', label: 'Drawings, 2020 to 2023', noun: ['drawing', 'drawings'], base: '../album/assets/artwork/', type: 'image',
+              files: ["unnamed.jpg", "IMG_20201123_095719.jpg", "IMG_20201220_095010.jpg", "IMG_20201220_095133.jpg", "unnamed (1).jpg", "IMG-20201130-WA0057.jpg", "IMG-20201130-WA0059.jpg", "IMG-20201130-WA0058.jpg", "20210106_084752.jpg", "IMG-20201226-WA0009.jpg", "unnamed (4).jpg", "20200928_133535.jpg", "20201127_093759.jpg", "20210106_085008.jpg", "20201201_082745.jpg", "IMG_20201219_094434.jpg", "Screenshot_20220112-083925_WhatsApp.jpg", "unnamed (2).jpg", "IMG_20201220_095406.jpg", "IMG-20201127-WA0026.jpg", "unnamed (5).jpg", "unnamed.png", "++.jpg", "unnamed (3).jpg", "unnamed (6).jpg", "++++.jpg", "IMG-20201130-WA0069.jpg", "20210306_070933.jpg", "IMG-20201130-WA0068.jpg", "IMG_20230913_205123.jpg", "Screenshot_20220131-121059_Gallery.jpg"] }
+};
 /* ===================================================================== */
 const $ = s => document.querySelector(s);
 const finder = $('#finder'), grid = $('#grid'), content = $('#content');
@@ -447,10 +539,18 @@ function itemsAt(loc){
   }
   return CONFIG.folders[loc].items;
 }
-const titleOf = loc => loc === 'root' ? 'Projects' : CONFIG.folders[loc].title;
+const titleOf = loc => loc === 'root' ? 'Projects' : MEDIA[loc] ? MEDIA[loc].title : CONFIG.folders[loc].title;
 
 function render(){
   const loc = here();
+  const isMedia = !!MEDIA[loc];
+  finder.classList.toggle('is-media', isMedia);
+  content.classList.toggle('is-media', isMedia);
+  grid.classList.toggle('is-media', isMedia);
+  grid.classList.toggle('is-art', loc === 'drawings');
+  document.querySelectorAll('#mSeg [data-media]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.media === loc)));
+  if (isMedia) { renderMedia(loc); return; }
+  const oldHead = content.querySelector('.m-head'); if (oldHead) oldHead.remove();
   const items = itemsAt(loc);
   grid.innerHTML = '';
   items.forEach(item => {
@@ -474,6 +574,123 @@ function render(){
     : `<button class="crumb" data-go="root">${folderIco}Projects</button><span class="crumb-sep">›</span><span class="crumb">${folderIco}${titleOf(loc)}</span>`;
   content.scrollTop = 0;
 }
+
+/* ---------- Photos / Videos / Drawings ---------- */
+const srcOf = (m, f) => m.base + encodeURI(f).replace(/#/g, '%23');
+const mmss = t => { t = Math.round(t || 0); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
+let mediaObs = null;
+function renderMedia(loc){
+  const m = MEDIA[loc], n = m.files.length;
+  let head = content.querySelector('.m-head');
+  if (!head) { head = document.createElement('div'); head.className = 'm-head'; content.insertBefore(head, grid); }
+  head.innerHTML = `<h2>${m.label}</h2><p>${n} ${n === 1 ? m.noun[0] : m.noun[1]}</p>`;
+  grid.innerHTML = '';
+  if (mediaObs) mediaObs.disconnect();
+  mediaObs = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    const el = e.target; mediaObs.unobserve(el);
+    el.src = el.dataset.src;
+  }), { root: content, rootMargin: '200px 0px' });
+  m.files.forEach((f, i) => {
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = 'm-tile';
+    el.setAttribute('role', 'listitem');
+    el.setAttribute('aria-label', `${m.title === 'Videos' ? 'Play' : 'Open'} ${m.noun[0]} ${i + 1} of ${n}`);
+    let media;
+    media = document.createElement('img');
+    media.alt = ''; media.decoding = 'async';
+    media.addEventListener('load', () => el.classList.add('is-loaded'), { once: true });
+    if (m.type === 'video') {
+      el.innerHTML = `<span class="m-dur"><svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1l7 4-7 4z"/></svg><span>${mmss(m.seconds[i])}</span></span>`;
+      media.dataset.src = srcOf(m, m.poster(f));
+    } else media.dataset.src = srcOf(m, f);
+    el.prepend(media);
+    el.addEventListener('click', () => {
+      grid.querySelectorAll('.m-tile.selected').forEach(t => t.classList.remove('selected'));
+      el.classList.add('selected');
+      openMedia(loc, i);
+    });
+    grid.appendChild(el);
+    mediaObs.observe(media);
+  });
+  titleEl.textContent = m.title;
+  finder.setAttribute('aria-label', 'Finder — ' + m.title);
+  countEl.textContent = n + ' ' + (n === 1 ? m.noun[0] : m.noun[1]);
+  btnBack.disabled = idx === 0;
+  btnFwd.disabled = idx === hist.length - 1;
+  document.querySelectorAll('.side-item[data-go]').forEach(b => b.classList.remove('active'));
+  const macIco = '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="8" rx="1.2"/><path d="M1 13h14" stroke-linecap="round"/></svg>';
+  crumbsEl.innerHTML = `<span class="crumb">${macIco}Sachin's MacBook</span><span class="crumb-sep">›</span><span class="crumb">${m.title}</span>`;
+  content.scrollTop = 0;
+}
+
+// the viewer
+const mv = $('#mv'), mvStage = $('#mvStage'), mvTitle = $('#mvTitle');
+let mediaOpen = false, mvLoc = null, mvIdx = 0, mvReturn = null;
+function showMedia(){
+  const m = MEDIA[mvLoc], f = m.files[mvIdx], n = m.files.length;
+  mvStage.querySelectorAll('img,video').forEach(x => { if (x.tagName === 'VIDEO') { x.pause(); x.removeAttribute('src'); x.load(); } x.remove(); });
+  let el;
+  if (m.type === 'video') {
+    el = document.createElement('video');
+    el.controls = true; el.playsInline = true; el.autoplay = true; el.preload = 'auto';
+    el.poster = srcOf(m, m.poster(f));
+    el.src = srcOf(m, f);
+  } else {
+    el = document.createElement('img');
+    el.alt = `${m.noun[0][0].toUpperCase() + m.noun[0].slice(1)} ${mvIdx + 1} of ${n}`;
+    el.src = srcOf(m, f);
+  }
+  mvStage.prepend(el);
+  if (!reduce) el.animate([{ opacity: 0, transform: 'scale(.985)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: 'cubic-bezier(.2,.8,.2,1)' });
+  mvTitle.innerHTML = `${m.title}<span>${mvIdx + 1} of ${n}</span>`;
+  $('#mvPrev').disabled = mvIdx === 0;
+  $('#mvNext').disabled = mvIdx === n - 1;
+}
+function openMedia(loc, i){
+  mvLoc = loc; mvIdx = i; mediaOpen = true;
+  mvReturn = document.activeElement;
+  $('#mvBackLabel').textContent = MEDIA[loc].title;
+  mv.hidden = false;
+  showMedia();
+  if (!reduce) mv.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'ease-out' });
+  $('#mvClose').focus({ preventScroll: true });
+}
+function closeMedia(){
+  if (!mediaOpen) return;
+  mediaOpen = false;
+  mvStage.querySelectorAll('video').forEach(v => v.pause());
+  const done = () => { mv.hidden = true; mvStage.querySelectorAll('img,video').forEach(x => x.remove()); };
+  if (reduce) done(); else mv.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 140, easing: 'ease-in' }).onfinish = done;
+  if (mvReturn && mvReturn.focus) mvReturn.focus({ preventScroll: true });
+}
+function stepMedia(d){
+  const n = MEDIA[mvLoc].files.length, j = mvIdx + d;
+  if (j < 0 || j >= n) return;
+  mvIdx = j; showMedia();
+}
+$('#mvBack').addEventListener('click', closeMedia);
+$('#mvClose').addEventListener('click', closeMedia);
+$('#mvPrev').addEventListener('click', () => stepMedia(-1));
+$('#mvNext').addEventListener('click', () => stepMedia(1));
+document.querySelectorAll('#mSeg [data-media]').forEach(b => b.addEventListener('click', () => navigate(b.dataset.media)));
+// opened from the dock: bring the Finder up if needed, then go there
+function goTo(loc){
+  if (mediaOpen) closeMedia();
+  const go = () => { if (busy) { setTimeout(go, 60); return; } if (here() !== loc) navigate(loc); };
+  if (viewerOpen) { closeViewer(); setTimeout(go, dur(560)); return; }
+  if (!finderOpen) openFinder();
+  go();
+}
+// the page around the laptop asks this before letting a scroll leave:
+// a long Photos grid scrolls first, like a case study does
+window.__finderOwnsScroll = dy => {
+  if (mediaOpen) return true;
+  if (!MEDIA[here()]) return false;
+  const max = content.scrollHeight - content.clientHeight;
+  return dy > 0 ? content.scrollTop < max - 1 : content.scrollTop > 1;
+};
 
 function activate(item, el){
   if (busy || viewerOpen) return;
@@ -501,6 +718,7 @@ function transition(dir){
 }
 function navigate(loc){
   if (busy || viewerOpen || loc === here()) return;
+  if (mediaOpen) closeMedia();
   hist = hist.slice(0, idx + 1); hist.push(loc); idx++;
   transition(loc === 'root' ? -1 : 1);
 }
@@ -666,6 +884,12 @@ $('#vBack').addEventListener('click', closeViewer);
 $('#vClose').addEventListener('click', closeViewer);
 
 document.addEventListener('keydown', e => {
+  if (mediaOpen) {
+    if (e.key === 'Escape') { e.preventDefault(); closeMedia(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); stepMedia(-1); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); stepMedia(1); }
+    return;
+  }
   if (e.key === 'Escape' && viewerOpen) { e.preventDefault(); closeViewer(); return; }
   if (!finderOpen || viewerOpen) return;
   if ((e.metaKey || e.ctrlKey) && e.key === '[') { e.preventDefault(); goBack(); }
@@ -673,29 +897,30 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Backspace' && !e.target.closest('input,textarea')) { e.preventDefault(); goBack(); }
 });
 
-/* ---------- Dock (hover magnification only) ---------- */
-const now = new Date();
+/* ---------- Dock: shortcuts to the rest of the portfolio ----------
+   Case studies opens this Finder. The others ask the page around the
+   laptop to go somewhere: the camera, the drawings, the about card,
+   the resume viewer or the contact block. */
 const DOCK = [
-  { label: 'Files', id: 'files', svg: `<rect width="64" height="64" rx="14" fill="url(#dFiles)"/><path d="M14 22a4 4 0 0 1 4-4h9l4 4h15a4 4 0 0 1 4 4v16a4 4 0 0 1-4 4H18a4 4 0 0 1-4-4z" fill="#fff" opacity=".95"/><path d="M14 28h36" stroke="#1673ea" stroke-width="2" opacity=".35"/>` },
-  { label: 'Browser', svg: `<rect width="64" height="64" rx="14" fill="#fff"/><circle cx="32" cy="32" r="18" fill="none" stroke="#2a7de1" stroke-width="3"/><ellipse cx="32" cy="32" rx="8" ry="18" fill="none" stroke="#2a7de1" stroke-width="2.5"/><path d="M14 32h36M17 23h30M17 41h30" stroke="#2a7de1" stroke-width="2.5"/>` },
-  { label: 'Messages', svg: `<rect width="64" height="64" rx="14" fill="url(#dChat)"/><path d="M32 15c-10.5 0-19 6.9-19 15.5 0 5 2.9 9.4 7.4 12.2L19 50l8.3-4.4c1.5.3 3.1.4 4.7.4 10.5 0 19-6.9 19-15.5S42.5 15 32 15z" fill="#fff"/><circle cx="24" cy="30.5" r="2.4" fill="#5a44e2"/><circle cx="32" cy="30.5" r="2.4" fill="#5a44e2"/><circle cx="40" cy="30.5" r="2.4" fill="#5a44e2"/>` },
-  { label: 'Calendar', svg: `<rect width="64" height="64" rx="14" fill="#fff"/><text x="32" y="22" text-anchor="middle" font-family="-apple-system,Inter,Arial,sans-serif" font-size="10" font-weight="700" fill="#ff3b30">${now.toLocaleDateString('en-US',{weekday:'short'}).toUpperCase()}</text><text x="32" y="50" text-anchor="middle" font-family="-apple-system,Inter,Arial,sans-serif" font-size="28" font-weight="300" fill="#1d1d1f">${now.getDate()}</text>` },
-  { label: 'Gallery', svg: `<rect width="64" height="64" rx="14" fill="url(#dGallery)"/><rect x="14" y="17" width="36" height="30" rx="5" fill="#fff" opacity=".95"/><circle cx="24" cy="26" r="3.5" fill="#ffb347"/><path d="M17 44l10-11 7 7 5-5 8 9z" fill="#ff7a59"/>` },
-  { label: 'Music', cls: 'hide-sm', svg: `<rect width="64" height="64" rx="14" fill="url(#dDark)"/><path d="M27 41V21l18-4v20" fill="none" stroke="url(#dMusicNote)" stroke-width="3.4" stroke-linejoin="round"/><circle cx="23" cy="42" r="5" fill="url(#dMusicNote)"/><circle cx="41" cy="38" r="5" fill="url(#dMusicNote)"/>` },
-  { label: 'Code', svg: `<rect width="64" height="64" rx="14" fill="url(#dDark)"/><path d="M25 22 15 32l10 10M39 22l10 10-10 10M35 18l-6 28" fill="none" stroke="#59c2ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>` },
-  { label: 'Terminal', cls: 'hide-sm', svg: `<rect width="64" height="64" rx="14" fill="#111114"/><rect x="1" y="1" width="62" height="62" rx="13" fill="none" stroke="#3a3a42"/><path d="M16 24l8 7-8 7" fill="none" stroke="#e8e8ea" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M28 40h14" stroke="#e8e8ea" stroke-width="3.2" stroke-linecap="round"/>` },
-  { label: 'Settings', svg: `<rect width="64" height="64" rx="14" fill="url(#dSettings)"/><g transform="translate(32 32)" fill="#5b5b63"><circle r="13"/><g >${Array.from({length:8},(_,i)=>`<rect x="-3.2" y="-19" width="6.4" height="8" rx="1.6" transform="rotate(${i*45})"/>`).join('')}</g></g><circle cx="32" cy="32" r="6" fill="#c4c4ca"/>` },
+  { label: 'Case studies', id: 'files', go: 'files', svg: `<rect width="64" height="64" rx="14" fill="url(#dFiles)"/><path d="M14 22a4 4 0 0 1 4-4h9l4 4h15a4 4 0 0 1 4 4v16a4 4 0 0 1-4 4H18a4 4 0 0 1-4-4z" fill="#fff" opacity=".95"/><path d="M14 28h36" stroke="#1673ea" stroke-width="2" opacity=".35"/>` },
+  { label: 'Photos', go: 'photos', svg: `<rect width="64" height="64" rx="14" fill="#fff"/><rect x="10" y="13" width="44" height="38" rx="6" fill="url(#dSky)"/><circle cx="41" cy="24" r="4.5" fill="#ffe08a"/><path d="M10 44l13-14 9 9 7-6 15 13v1a6 6 0 0 1-6 6H16a6 6 0 0 1-6-6z" fill="url(#dHill)"/><rect x="10" y="13" width="44" height="38" rx="6" fill="none" stroke="rgba(0,0,0,.08)"/>` },
+  { label: 'Videos', go: 'videos', svg: `<rect width="64" height="64" rx="14" fill="url(#dCam)"/><rect x="12" y="18" width="40" height="28" rx="4" fill="#2b2b33"/><g fill="#5b5b66"><rect x="14" y="20" width="4" height="3" rx=".6"/><rect x="14" y="27" width="4" height="3" rx=".6"/><rect x="14" y="34" width="4" height="3" rx=".6"/><rect x="14" y="41" width="4" height="3" rx=".6"/><rect x="46" y="20" width="4" height="3" rx=".6"/><rect x="46" y="27" width="4" height="3" rx=".6"/><rect x="46" y="34" width="4" height="3" rx=".6"/><rect x="46" y="41" width="4" height="3" rx=".6"/></g><path d="M28 25.5v13l11-6.5z" fill="#e0a15e"/>` },
+  { label: 'Drawings', go: 'drawings', svg: `<rect width="64" height="64" rx="14" fill="url(#dPaper)"/><path d="M15 44c4-6 7-9 10-8s1 6 5 6 6-9 10-10 4 4 7 3" fill="none" stroke="#3a3530" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/><g transform="rotate(-42 38 26)"><rect x="24" y="22.5" width="26" height="7" rx="1.2" fill="url(#dPencil)"/><rect x="47" y="22.5" width="5" height="7" rx="1" fill="#e98a8a"/><rect x="45" y="22.5" width="2.4" height="7" fill="#b9b9c0"/><path d="M24 22.5l-7 3.5 7 3.5z" fill="#f3d9b1"/><path d="M19.6 24.7 17 26l2.6 1.3z" fill="#2b2622"/></g>` },
+  { label: 'About me', go: 'about', svg: `<rect width="64" height="64" rx="14" fill="url(#dAbout)"/><rect x="13" y="14" width="38" height="36" rx="5" fill="#fffaf3"/><circle cx="25" cy="28" r="5.5" fill="#c58d57"/><path d="M16.5 43c1.3-5.6 4.6-8.4 8.5-8.4s7.2 2.8 8.5 8.4z" fill="#c58d57"/><path d="M37 26h9M37 31h9M37 36h6" stroke="#cdb59a" stroke-width="2.4" stroke-linecap="round"/>` },
   { sep: true },
-  { label: 'Downloads', cls: 'hide-sm', svg: `<rect width="64" height="64" rx="14" fill="url(#dDownloads)"/><path d="M32 16v24M22 31l10 10 10-10" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 46h28" stroke="#fff" stroke-width="4" stroke-linecap="round"/>` },
-  { label: 'Trash', svg: `<rect x="12" y="10" width="40" height="5" rx="2.5" fill="#d6d6dc"/><path d="M15 18h34l-3 36a4 4 0 0 1-4 3.6H22a4 4 0 0 1-4-3.6z" fill="url(#dTrash)" stroke="#b8b8c0"/><path d="M25 24v26M32 24v26M39 24v26" stroke="#b0b0b8" stroke-width="2" stroke-linecap="round"/>` }
+  { label: 'Resume', go: 'resume', svg: `<rect width="64" height="64" rx="14" fill="url(#dDoc)"/><path d="M19 11h19l8 8v34a2 2 0 0 1-2 2H19a2 2 0 0 1-2-2V13a2 2 0 0 1 2-2z" fill="#fff" stroke="#c4c5cd"/><path d="M38 11v6a2 2 0 0 0 2 2h6" fill="#ececf1" stroke="#c4c5cd"/><text x="31.5" y="33" text-anchor="middle" font-family="-apple-system,Inter,Arial,sans-serif" font-size="11" font-weight="800" fill="#b8641f">CV</text><path d="M23 39h17M23 43.5h17M23 48h11" stroke="#d3d4db" stroke-width="2" stroke-linecap="round"/>` },
+  { label: 'Contact', go: 'contact', svg: `<rect width="64" height="64" rx="14" fill="url(#dMail)"/><rect x="12" y="19" width="40" height="27" rx="4" fill="#fff"/><path d="M13.5 21.5 32 35l18.5-13.5" fill="none" stroke="#1769e0" stroke-width="2.6" stroke-linejoin="round"/><path d="M13.5 44 26 31.5M50.5 44 38 31.5" stroke="#c9dcf6" stroke-width="2"/>` }
 ];
 const dock = $('#dock');
 DOCK.forEach(d => {
-  if (d.sep) { const s = document.createElement('div'); s.className = 'dock-sep'; dock.appendChild(s); return; }
-  const el = document.createElement('div');
+  if (d.sep) { const s = document.createElement('div'); s.className = 'dock-sep'; s.setAttribute('aria-hidden', 'true'); dock.appendChild(s); return; }
+  const el = document.createElement('button');
+  el.type = 'button';
   el.className = 'dock-item' + (d.cls ? ' ' + d.cls : '');
   if (d.id) el.id = 'dock-' + d.id;
-  el.innerHTML = `<svg viewBox="0 0 64 64">${d.svg}</svg><span class="tip">${d.label}</span><span class="dot"></span>`;
+  el.dataset.dock = d.go;
+  el.setAttribute('aria-label', d.label);
+  el.innerHTML = `<svg viewBox="0 0 64 64" aria-hidden="true">${d.svg}</svg><span class="tip" aria-hidden="true">${d.label}</span><span class="dot" aria-hidden="true"></span>`;
   dock.appendChild(el);
 });
 const dockItems = [...dock.querySelectorAll('.dock-item')];
@@ -715,8 +940,29 @@ if (!reduce && matchMedia('(hover:hover)').matches) {
   dock.addEventListener('mousemove', e => { mx = e.clientX; dock.classList.add('tracking'); if (!raf) raf = requestAnimationFrame(magnify); });
   dock.addEventListener('mouseleave', () => { mx = null; dock.classList.remove('tracking'); if (!raf) raf = requestAnimationFrame(magnify); });
 }
-// The dock is decorative: swallow presses so nothing reacts to clicks.
-['mousedown','click','dblclick','contextmenu','dragstart'].forEach(t => dock.addEventListener(t, e => e.preventDefault()));
+function hop(el){
+  if (reduce) return Promise.resolve();
+  return el.querySelector('svg').animate([
+    { transform: 'translateY(0)' }, { transform: 'translateY(-14px)', offset: .35 }, { transform: 'translateY(0)' }
+  ], { duration: 380, easing: 'cubic-bezier(.2,.8,.2,1)' }).finished.catch(() => {});
+}
+['dblclick','contextmenu','dragstart'].forEach(t => dock.addEventListener(t, e => e.preventDefault()));
+dock.addEventListener('click', e => {
+  const el = e.target.closest('.dock-item');
+  if (!el) return;
+  e.preventDefault();
+  const go = el.dataset.dock;
+  if (MEDIA[go]) { hop(el); goTo(go); return; }
+  if (go === 'files') {
+    if (viewerOpen) closeViewer();
+    if (!finderOpen) openFinder();
+    else { bounceFiles(); if (here() !== 'uiux') setTimeout(() => navigate('uiux'), viewerOpen ? 520 : 0); }
+    return;
+  }
+  hop(el).then(() => {
+    if (window.parent !== window) window.parent.postMessage({ portfolioGo: go }, '*');
+  });
+});
 
 const filesDock = $('#dock-files');
 function setRunning(on){ filesDock.classList.toggle('running', on); }
@@ -753,13 +999,14 @@ setTimeout(openFinder, dur(450));
   function landing() {
     try {
       // Any Finder folder view counts; only an open case study keeps the scroll.
-      var open = (typeof viewerOpen !== 'undefined') && viewerOpen;
+      var open = ((typeof viewerOpen !== 'undefined') && viewerOpen) || ((typeof mediaOpen !== 'undefined') && mediaOpen);
       return !open;
     } catch (e) { return false; }
   }
   addEventListener('wheel', function (e) {
     var dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? innerHeight : 1);
-    parent.postMessage({ frameScroll: 'wheel', dy: dy, landing: landing() }, '*');
+    var owns = typeof window.__finderOwnsScroll === 'function' && window.__finderOwnsScroll(dy);
+    parent.postMessage({ frameScroll: 'wheel', dy: dy, landing: landing() && !owns }, '*');
   }, { passive: true, capture: true });
   addEventListener('keydown', function (e) {
     var dir = { ArrowDown: 1, PageDown: 1, ArrowUp: -1, PageUp: -1 }[e.key];

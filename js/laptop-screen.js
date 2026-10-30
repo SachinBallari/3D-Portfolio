@@ -419,7 +419,7 @@
     window.addEventListener('resize', sizeLayers);
     window.addEventListener('message', onMessage);
     // While the HTML owns scrolling, the page itself must not move.
-    window.addEventListener('wheel', function (e) { if (locked) e.preventDefault(); }, { passive: false });
+    window.addEventListener('wheel', function (e) { if (locked && !document.documentElement.classList.contains('cv-open')) e.preventDefault(); }, { passive: false });
     window.addEventListener('keydown', function (e) {
       if (locked && /^(ArrowUp|ArrowDown|PageUp|PageDown|Home|End| )$/.test(e.key)) e.preventDefault();
     });

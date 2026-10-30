@@ -110,6 +110,73 @@
     LaptopScreen.enter();
     requestAnimationFrame(function () { if (FS.snap) FS.snap(); });
   }
+  // Photography: straight onto the camera's screen, like the case studies
+  function openCamera() {
+    if (tour) stopTour();
+    if (!window.CameraScreen || !CameraScreen.enter) { jumpTo('photography'); return; }
+    if (window.LaptopScreen && LaptopScreen.isLocked()) LaptopScreen.exit(0);
+    jumpingUntil = performance.now() + 400;
+    CameraScreen.enter();
+    if (FS && FS.snap) FS.snap();
+    requestAnimationFrame(function () { if (FS && FS.snap) FS.snap(); });
+  }
+
+  /* ---------- resume viewer ---------- */
+  var cv = null, cvReturn = null;
+  function openResume() {
+    if (tour) stopTour();
+    cv = cv || document.getElementById('cv');
+    if (!cv || cv.open) return;
+    cvReturn = document.activeElement;
+    if (typeof cv.showModal === 'function') cv.showModal(); else cv.setAttribute('open', '');
+    root.classList.add('cv-open');
+    var sc = cv.querySelector('.cv__scroll'); if (sc) sc.scrollTop = 0;
+  }
+  function closeResume() {
+    if (!cv || !cv.open) return;
+    if (typeof cv.close === 'function') cv.close(); else cv.removeAttribute('open');
+  }
+  function wireResume() {
+    cv = document.getElementById('cv');
+    document.querySelectorAll('[data-resume]').forEach(function (b) {
+      b.addEventListener('click', function (e) { e.preventDefault(); openResume(); });
+    });
+    if (!cv) return;
+    cv.addEventListener('close', function () {
+      root.classList.remove('cv-open');
+      if (cvReturn && cvReturn.focus) { try { cvReturn.focus({ preventScroll: true }); } catch (e) {} }
+    });
+    cv.addEventListener('click', function (e) { if (e.target === cv) closeResume(); });   // the backdrop
+    var x = cv.querySelector('[data-cv-close]'); if (x) x.addEventListener('click', closeResume);
+    // while it is open, the wheel scrolls the resume and never the animation behind it
+    window.addEventListener('wheel', function (e) {
+      if (!cv.open) return;
+      var sc = cv.querySelector('.cv__scroll');
+      if (!sc || !sc.contains(e.target)) { e.preventDefault(); e.stopImmediatePropagation(); }
+    }, { passive: false, capture: true });
+    window.addEventListener('keydown', function (e) {
+      if (!cv.open) return;
+      var sc = cv.querySelector('.cv__scroll'), step = { ArrowDown: 60, ArrowUp: -60, PageDown: 0.9, PageUp: -0.9, ' ': 0.9 }[e.key];
+      if (!sc || step == null || (e.target && e.target.closest && e.target.closest('a,button') && e.key === ' ')) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      sc.scrollBy({ top: Math.abs(step) < 1 ? step * sc.clientHeight : step, behavior: 'smooth' });
+    }, true);
+  }
+
+  // the dock on the laptop's screen asks for these
+  function wireDock() {
+    window.addEventListener('message', function (ev) {
+      var d = ev.data; if (!d || typeof d.portfolioGo !== 'string') return;
+      var lf = document.querySelector('.laptop-screen__frame');
+      if (!lf || ev.source !== lf.contentWindow) return;
+      switch (d.portfolioGo) {
+        case 'resume': openResume(); break;
+        case 'photography': openCamera(); break;
+        case 'about': case 'art': case 'contact': stopTour(); jumpTo(d.portfolioGo); break;
+      }
+    });
+  }
+
   window.addEventListener('scroll', function () {
     if (jumpingUntil && performance.now() < jumpingUntil) jumpingUntil = Math.max(jumpingUntil, performance.now() + 150);
   }, { passive: true });
@@ -488,8 +555,14 @@
     wireTourStops();
     wireCopyEmail();
     wireViews();
-    var cb = document.querySelector('[data-cases]');
-    if (cb) cb.addEventListener('click', openCases);
+    document.querySelectorAll('[data-cases]').forEach(function (b) {
+      b.addEventListener('click', function (e) { e.preventDefault(); openCases(); });
+    });
+    document.querySelectorAll('[data-camera]').forEach(function (b) {
+      b.addEventListener('click', function (e) { e.preventDefault(); openCamera(); });
+    });
+    wireResume();
+    wireDock();
     // Home / End go to the top and the footer directly, past the screens
     window.addEventListener('keydown', function (e) {
       if (e.altKey || e.ctrlKey || e.metaKey) return;
@@ -548,6 +621,8 @@
     stopTour: function () { stopTour(); },
     touring: function () { return !!tour; },
     setMode: setMode,
-    jumpTo: jumpTo
+    jumpTo: jumpTo,
+    openResume: openResume,
+    openCamera: openCamera
   };
 })();

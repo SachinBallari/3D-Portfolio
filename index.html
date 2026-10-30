@@ -92,11 +92,24 @@
 
     <aside class="ui-card ui-about lg ui-fade" data-show="about" aria-labelledby="about-title">
       <p class="ui-eyebrow">About</p>
-      <h2 id="about-title">Hi, I’m Sachin.</h2>
-      <p>I design interfaces, build them in code and photograph the people and places around me. I also draw, mostly in graphite and charcoal.</p>
-      <ul class="ui-chips" aria-label="What I do">
-        <li>UI/UX design</li><li>Coding</li><li>Photography &amp; film</li><li>Art</li>
-      </ul>
+      <h2 id="about-title">I design apps, then I build them.</h2>
+      <p class="ui-about__lead">I’m Sachin, an Electronics and Communication student in Dharwad. Every case study here comes with a prototype you can click through.</p>
+      <dl class="ui-about__list">
+        <div class="ui-about__row">
+          <dt>Design</dt>
+          <dd>Research, flows and design systems in Figma. Four products so far, from a village water app to a central-bank website. Named Best Designer at the FIGMAVERSE workshop.
+            <a class="ui-about__go" href="#work" data-cases>Open the case studies<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a></dd>
+        </div>
+        <div class="ui-about__row">
+          <dt>Code</dt>
+          <dd>Working prototypes in HTML, CSS and JavaScript. Python and OpenCV on a Raspberry Pi for hardware: a surveillance camera that spots unusual activity, and a navigation stick for visually impaired people.</dd>
+        </div>
+        <div class="ui-about__row">
+          <dt>Off screen</dt>
+          <dd>Photography and film. I lead my college’s media team, and I draw portraits in graphite and charcoal.
+            <span class="ui-about__links"><a class="ui-about__go" href="#photography" data-camera>Photos<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a><a class="ui-about__go" href="#art" data-go="art">Drawings<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a></span></dd>
+        </div>
+      </dl>
     </aside>
 
     <aside class="ui-card ui-chapter lg ui-fade" data-show="work" aria-labelledby="work-title">
@@ -175,6 +188,32 @@
   <!-- Closing footer -->
   <section class="site-end" id="contact" aria-label="Contact">
     <footer class="site-end__foot">
+      <div class="end-cta">
+        <div class="end-cta__main">
+          <p class="end-cta__eyebrow">Contact</p>
+          <h2 class="end-cta__title">Have a role or a project in mind? Let’s talk.</h2>
+          <a class="end-cta__mail" href="mailto:sachinballari061@gmail.com">sachinballari061@gmail.com</a>
+          <div class="end-cta__actions">
+            <a class="end-btn end-btn--primary" href="mailto:sachinballari061@gmail.com">Email me<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
+            <a class="end-btn" href="mailto:sachinballari061@gmail.com" data-copy-email="sachinballari061@gmail.com">Copy email<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1"/><path d="M10.5 5.5v-2a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2"/></svg></a>
+            <a class="end-btn" href="https://www.linkedin.com/in/sachin-s-b-0715a6252/" target="_blank" rel="noopener noreferrer">LinkedIn<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 11l6-6M6 5h5v5"/></svg></a>
+          </div>
+          <p class="end-cta__where">Dharwad, Karnataka · IST (UTC+5:30)</p>
+        </div>
+        <div class="end-cv">
+          <button type="button" class="end-cv__sheet" data-resume aria-label="View resume">
+            <img src="resume/resume-thumb.webp" alt="" width="720" height="932" loading="lazy" decoding="async">
+          </button>
+          <div class="end-cv__info">
+            <p class="end-cv__title">Resume</p>
+            <p class="end-cv__meta">One page · PDF · October 2026</p>
+            <div class="end-cv__actions">
+              <button type="button" class="end-btn" data-resume>View<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/></svg></button>
+              <a class="end-btn end-btn--primary" href="resume/Sachin-S-Ballari-Resume.pdf" download="Sachin-S-Ballari-Resume.pdf">Download PDF<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v8M4.5 7 8 10.5 11.5 7M3 13.5h10"/></svg></a>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="site-end__cols">
         <div>
           <p class="site-end__brand"><i aria-hidden="true">SB</i>Sachin S Ballari</p>
@@ -205,9 +244,10 @@
           </ul>
         </nav>
         <div>
-          <h3>Contact</h3>
+          <h3>Resume</h3>
           <ul class="site-end__menu">
-            <li><a href="mailto:sachinballari061@gmail.com">sachinballari061@gmail.com</a></li>
+            <li><a href="resume/Sachin-S-Ballari-Resume.pdf" data-resume>View</a></li>
+            <li><a href="resume/Sachin-S-Ballari-Resume.pdf" download="Sachin-S-Ballari-Resume.pdf">Download PDF</a></li>
           </ul>
         </div>
       </div>
@@ -216,6 +256,24 @@
       </div>
     </footer>
   </section>
+
+  <dialog class="cv" id="cv" aria-labelledby="cv-title">
+    <div class="cv__bar">
+      <div class="cv__head">
+        <p class="cv__title" id="cv-title">Resume</p>
+        <p class="cv__meta">Sachin S Ballari Mulimani · one page</p>
+      </div>
+      <div class="cv__actions">
+        <a class="end-btn" href="resume/Sachin-S-Ballari-Resume.pdf" target="_blank" rel="noopener">Open PDF<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 11l6-6M6 5h5v5"/></svg></a>
+        <a class="end-btn end-btn--primary" href="resume/Sachin-S-Ballari-Resume.pdf" download="Sachin-S-Ballari-Resume.pdf">Download<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v8M4.5 7 8 10.5 11.5 7M3 13.5h10"/></svg></a>
+        <button type="button" class="cv__close" data-cv-close aria-label="Close"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+      </div>
+    </div>
+    <div class="cv__scroll" tabindex="0" autofocus>
+      <img class="cv__page" src="resume/resume-page.webp" width="1700" height="2200" loading="lazy" decoding="async"
+        alt="Resume of Sachin S Ballari Mulimani: Electronics and Communication student at SDMCET Dharwad; projects in AI surveillance, a smart navigation stick and the TAGX app; media team lead; Best Designer at FIGMAVERSE.">
+    </div>
+  </dialog>
 
   <script>
   /* Review build only: same three sequences, packed 4 frames per WebP sheet

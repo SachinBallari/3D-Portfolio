@@ -17,11 +17,12 @@
      CAMERA_EXIT              – the view pulls back out of the display
      MAIN_SCENE_CONTINUE      – main animation continues
 
-   Exit rule: a scroll anywhere on the screen leaves the camera HTML once
-   the HTML has nothing of its own left to scroll that way (the menu and
-   the photo viewer never scroll; the Photography / Videography grid
-   scrolls first, then the next scroll leaves). Scrolling down continues
-   the animation; scrolling up goes back out the way you came in.
+   Exit rule: the view stops with the camera body around the display.
+   The wheel over the display belongs to the camera (the Photography /
+   Videography grid scrolls; on the main menu a new scroll leaves). The
+   wheel anywhere else (the body, the bezels) leaves: the camera eases
+   back to its main menu first, then the view pulls out. Scrolling down
+   continues the animation; scrolling up goes back out the way you came in.
 
    The camera HTML fills whatever box it is given (its sizes follow the
    box height), so on the camera it is laid out at the display's own
@@ -41,7 +42,8 @@
     edgeInset: -0.004,        // HTML edge vs tracked display edge (× display size)
     enterLength: 0.9,         // scroll distance (× viewport height) of the move into the display
     exitLength: 1.2,          // … and of the pull back out of it
-    takeover: 0.22,           // last part of the move: display → full-screen HTML
+    takeover: 0,              // 0: the view stops with the camera body around the display (no full-screen hand-over)
+    frameScale: 0.84,         // display height when stopped, × viewport height (leaves the bezels in view)
     rearm: 0.5,               // × viewport height away from the pause before it can catch again
     exitThreshold: 60,        // px of wheel movement (with nothing left to scroll) before leaving
     newGestureGap: 420,       // ms without wheel input that starts a new scroll gesture
@@ -224,8 +226,8 @@
     var Q = screenQuad(seq, k);
     var a = phase ? st.amount : 0;
     var T = OPTIONS.takeover;
-    var a1 = clamp01(a / (1 - T));
-    var a2 = clamp01((a - (1 - T)) / T);
+    var a1 = T > 0 ? clamp01(a / (1 - T)) : a;
+    var a2 = T > 0 ? clamp01((a - (1 - T)) / T) : 0;
     var e1 = smooth(a1), e2 = smooth(a2);
 
     var P = Q, w = lw, h = lh, canvasT = '';
@@ -271,7 +273,7 @@
       ? 'linear-gradient(to right, transparent, #000 ' + fl.toFixed(2) + 'px, #000 calc(100% - ' + fl.toFixed(2) + 'px), transparent),' +
         'linear-gradient(to bottom, transparent, #000 ' + fl.toFixed(2) + 'px, #000 calc(100% - ' + fl.toFixed(2) + 'px), transparent)'
       : 'none';
-    var full = a >= 0.999;
+    var full = T > 0 && a >= 0.999;
     var tf = full ? 'none' : css3(rectToQuad(E, w, h));
     var tfFrame = full ? 'none' : css3(rectToQuad(E, Math.round(w), Math.round(h)));
 
@@ -343,6 +345,43 @@
     prevY = window.scrollY;
   }
 
+  /* ---------- leaving from outside the screen ----------
+     The wheel over the display scrolls the camera's own gallery. The wheel
+     anywhere else (the camera body, the bezels, the room) moves the
+     animation on: the camera first eases back to its main menu if a
+     gallery or a photo is open, then the view pulls out. */
+  var outAcc = 0, outTimer = 0, lastOutAt = 0, outStart = 0, leaving = false, homeWait = 0;
+  function leave(dir) {
+    if (leaving || !locked) return;
+    leaving = true;
+    var go = function () {
+      if (!leaving) return;
+      clearTimeout(homeWait); window.removeEventListener('message', onHome);
+      leaving = false; outAcc = 0;
+      unlock(dir);
+    };
+    function onHome(ev) { if (ev.source === frame.contentWindow && ev.data && ev.data.fxAtHome) go(); }
+    window.addEventListener('message', onHome);
+    homeWait = setTimeout(go, 900);   // never wait longer than this
+    try { frame.contentWindow.postMessage({ fxHome: 1 }, '*'); } catch (e) { go(); }
+  }
+  function onOutsideWheel(e) {
+    if (!locked || document.documentElement.classList.contains('cv-open')) return;
+    e.preventDefault();
+    var dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaMode === 2 ? e.deltaY * vh : e.deltaY;
+    if (!dy) return;
+    var now = performance.now();
+    if (now - lastOutAt > OPTIONS.newGestureGap) { outStart = now; outAcc = 0; }
+    lastOutAt = now;
+    // the scroll that brought you here must stop first; a new one leaves
+    if (now - lockedAt < OPTIONS.settleTime || outStart <= lockedAt) return;
+    outAcc += dy;
+    clearTimeout(outTimer);
+    outTimer = setTimeout(function () { outAcc = 0; }, 250);
+    if (outAcc > OPTIONS.exitThreshold) leave(1);
+    else if (outAcc < -OPTIONS.exitThreshold) leave(-1);
+  }
+
   function onScroll() {
     var y = window.scrollY;
     var py = FS.pauseScrollY(KEY);
@@ -390,7 +429,7 @@
 
   function sizeLayers() {
     vw = stage.clientWidth; vh = stage.clientHeight;
-    lh = vh; lw = vh * TRACK.aspect;
+    lh = Math.round(vh * OPTIONS.frameScale); lw = lh * TRACK.aspect;
     lastCss = {};
     computePause();
     if (locked) { var y = FS.pauseScrollY(KEY); if (y != null) window.scrollTo(0, Math.round(y)); }
@@ -417,7 +456,7 @@
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', sizeLayers);
     window.addEventListener('message', onMessage);
-    window.addEventListener('wheel', function (e) { if (locked) e.preventDefault(); }, { passive: false });
+    window.addEventListener('wheel', onOutsideWheel, { passive: false });
     window.addEventListener('keydown', function (e) {
       if (locked && /^(ArrowUp|ArrowDown|PageUp|PageDown|Home|End| )$/.test(e.key)) e.preventDefault();
     });
@@ -431,6 +470,7 @@
     pause: function () { return pause; },
     isLocked: function () { return locked; },
     screenQuad: function () { return lastQuad; },
-    exit: unlock
+    exit: unlock,
+    enter: function () { if (!locked) lock(); }   // go straight to the camera's screen
   };
 })();
