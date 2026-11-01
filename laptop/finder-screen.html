@@ -331,6 +331,10 @@ button.crumb:hover{background:var(--hover)}
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M1.5 4.5a1.5 1.5 0 0 1 1.5-1.5h3l1.5 1.5H13a1.5 1.5 0 0 1 1.5 1.5v6A1.5 1.5 0 0 1 13 13.5H3A1.5 1.5 0 0 1 1.5 12z"/></svg>
             UI/UX
           </button>
+          <button class="side-item" data-go="cs2">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M1.5 4.5a1.5 1.5 0 0 1 1.5-1.5h3l1.5 1.5H13a1.5 1.5 0 0 1 1.5 1.5v6A1.5 1.5 0 0 1 13 13.5H3A1.5 1.5 0 0 1 1.5 12z"/></svg>
+            Case Study 2
+          </button>
         </nav>
         <div class="side-group" aria-hidden="true">
           <div class="side-label">Locations</div>
@@ -413,6 +417,18 @@ button.crumb:hover{background:var(--hover)}
 </div>
 
 <script>window.CASE_CHUNKS = {
+ "cs2-tagx-case-study.html": [
+  "cases2/cs2-tagx-case-study.js"
+ ],
+ "cs2-pop-desktop.html": [
+  "cases2/cs2-pop-desktop.js"
+ ],
+ "cs2-rbi-redesign.html": [
+  "cases2/cs2-rbi-redesign.js"
+ ],
+ "cs2-teams-redesign.html": [
+  "cases2/cs2-teams-redesign.js"
+ ],
  "TAGX-publishable-case-study.html": [
   "cases/tagx-publishable-case-study-1.js"
  ],
@@ -449,6 +465,16 @@ const CONFIG = {
         { name: 'RBI Redesign', src: 'RBI_CaseStudy_Animated.html', mark: 'RBI', colors: ['#164f86', '#c8740d'], kind: 'Case study' },
         { name: '3D Portfolio', src: 'Portfolio_design-system.html', mark: '3D',  colors: ['#f4c48c', '#b0623a'], kind: 'Case study' },
         { name: 'Neeru',        src: 'Neeru-case-study.html', mark: 'NR', colors: ['#e3a530', '#0b3442'], kind: 'Case study' }
+      ]
+    },
+    cs2: {
+      title: 'Case Study 2',
+      glyph: 'pen',
+      items: [
+        { name: 'TAGX',           src: 'cs2-tagx-case-study.html',   mark: 'TX',  colors: ['#7657ff', '#1b1b22'], kind: 'Case study' },
+        { name: 'POP Desktop',    src: 'cs2-pop-desktop.html',       mark: 'POP', colors: ['#7b36ff', '#ff5b18'], kind: 'Case study' },
+        { name: 'RBI Redesign',   src: 'cs2-rbi-redesign.html',      mark: 'RBI', colors: ['#0b2b4a', '#c8740d'], kind: 'Case study' },
+        { name: 'Teams Redesign', src: 'cs2-teams-redesign.html',    mark: 'MT',  colors: ['#5b5fc7', '#2b2c6e'], kind: 'Case study' }
       ]
     }
   }
